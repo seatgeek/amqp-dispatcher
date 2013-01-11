@@ -1,8 +1,8 @@
 
 import gevent
 
-def consume(*args, **kwargs):
-    print 'Consuming message', args, kwargs
+def consume(ack, msg):
+    print 'Consuming message', msg.body
     gevent.sleep(3)
     print 'Done sleeping'
-
+    ack()

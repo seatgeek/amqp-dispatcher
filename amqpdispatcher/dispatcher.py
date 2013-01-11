@@ -43,16 +43,20 @@ def setup():
 
     # Create and configure message exchange and queue
     channel.exchange.declare('test_exchange', 'direct')
-    channel.queue.declare('test_queue', auto_delete=True)
+    channel.queue.declare('test_queue', auto_delete=False)
     channel.queue.bind('test_queue', 'test_exchange', 'test_routing_key')
     consumers = [
         ('test_queue', 'amqpdispatcher.example_consumer:consume'),
         ('test_queue', 'amqpdispatcher.example_consumer:consume'),
     ]
 
-    def create_consume_wrapper(func):
+    def create_consume_wrapper(channel, func):
         def wrapper(msg):
-            func(None, msg)
+            def ack():
+                tag = msg.delivery_info['delivery_tag']
+                channel.basic.ack(tag)
+                print 'Acked'
+            gevent.spawn(func, ack, msg)
         return wrapper
 
     for queue_name, consumer_str in consumers:
@@ -60,9 +64,13 @@ def setup():
         module = importlib.import_module(module_name)
         func = getattr(module, func_name)
         consume_channel = conn.channel()
-        print consume_channel
-        consume_channel.basic.qos(prefetch_count=1)
-        consume_channel.basic.consume(queue=queue_name, consumer=create_consume_wrapper(func))
+        consume_channel.basic.qos(prefetch_count=2)
+        callback = create_consume_wrapper(consume_channel, func)
+        consume_channel.basic.consume(
+            queue=queue_name,
+            consumer=callback,
+            no_ack=False,
+        )
         print 'Channel!'
         gevent.sleep()
 
