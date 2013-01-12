@@ -41,7 +41,6 @@ def setup():
     channel.queue.bind('test_queue', 'test_exchange', 'test_routing_key')
     consumers = [
         ('test_queue', 'amqpdispatcher.example_consumer:consume'),
-        ('test_queue', 'amqpdispatcher.example_consumer:consume'),
     ]
 
     def create_consume_wrapper(channel, func):
