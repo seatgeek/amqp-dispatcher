@@ -8,16 +8,19 @@ def read(fname):
 
 def run_setup():
     setup(
-        name='',
-        version='0.0.1',
-        description='',
-        keywords = '',
-        url='',
-        author='',
-        author_email='@',
-        license='',
-        packages=[''],
+        name='amqp-dispatcher',
+        version='0.0.2',
+        description='A daemon gevent to run AMQP consumers',
+        keywords = 'amqp',
+        url='http://github.com/philipcristiano/amqp-dispatcher',
+        author='Philip Cristiano',
+        author_email='philipcristiano@gmail.com',
+        license='BSD',
+        packages=['amqpdispatcher'],
         install_requires=[
+            'gevent',
+            'haigha',
+            'pyyaml',
         ],
         test_suite='tests',
         long_description=read('README.md'),
@@ -26,6 +29,7 @@ def run_setup():
         ],
         entry_points="""
         [console_scripts]
+            amqp-dispatcher=amqpdispatcher.dispatcher:main
         """,
     )
 
