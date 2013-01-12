@@ -1,15 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
-from optparse import OptionParser
 import importlib
 import logging
-import os
-import random
-import socket
-import sys
 
 import gevent
-import gevent.event as gevent_event
 
 from haigha.connection import Connection as haigha_Connection
 from haigha.message import Message
