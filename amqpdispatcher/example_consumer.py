@@ -2,12 +2,6 @@ import random
 
 import gevent
 
-def consume(ack, msg):
-    print 'Consuming message', msg.body
-    gevent.sleep(1)
-    print 'Done sleeping'
-    ack()
-
 
 class Consumer(object):
 
@@ -28,4 +22,3 @@ class Consumer(object):
 
     def shutdown(self, exception=None):
         print 'Shut down'
-
