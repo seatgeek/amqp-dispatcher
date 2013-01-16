@@ -135,7 +135,7 @@ class AMQPProxy(object):
 
     def publish(self, exchange, routing_key, headers, body):
         msg = Message(body, headers)
-        self._channel.basic.publish(msg, 'test_exchange', 'test_routing_key')
+        self._channel.basic.publish(msg, exchange, routing_key)
 
 
 def message_pump_greenthread(connection):
