@@ -59,13 +59,14 @@ def setup():
         queue_name = consumer['queue']
         prefetch_count = consumer.get('prefetch_count', 1)
         consumer_str = consumer.get('consumer')
+        consumer_count = consumer.get('consumer_count', 1)
 
         module_name, obj_name = consumer_str.split(':')
         module = importlib.import_module(module_name)
         consumer_klass = getattr(module, obj_name)
         consume_channel = conn.channel()
         consume_channel.basic.qos(prefetch_count=prefetch_count)
-        pool = ConsumerPool(consume_channel, consumer_klass, prefetch_count)
+        pool = ConsumerPool(consume_channel, consumer_klass, consumer_count)
         consume_channel.basic.consume(
             queue=queue_name,
             consumer=pool.handle,

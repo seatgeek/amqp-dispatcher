@@ -22,7 +22,11 @@ parameters, a proxy for AMQP operations (`amqp`) and the message (`msg`).
 ### `shutdown`
 
 `shutdown` is called before the instance of the consumer is removed. It takes a
-single argument `exception` which may be `None`
+single argument `exception` which may be `None`. If your consumer raises an
+exception while consuming the `shutdown` method will be called. Once `shutdown`
+is finished a new instance of your consumer will be created to replace the one
+that raised the exception. If you would like to rate limit instance replacement
+you can call `gevent.sleep(X)` to sleep for `X` seconds after a failure.
 
 
 ### Example
@@ -68,14 +72,18 @@ A complete configuration example would look like:
 
     consumers:
       - consumer: workers.module:Consumer
+        consumer_count: 1
         queue: test_queue
-        prefetch_count: 1
+        prefetch_count: 2
       - consumer: workers.module_2:Consumer
+        consumer_count: 2
         queue: test_queue_2
-        prefetch_count: 1
+        prefetch_count: 10
 
-At the moment the `prefetch_count` is the AMQP prefetch count as well as the
-number of instances of your consumer. Connection pools are highly recommended.
+
+`prefetch_count` is the AMQP `prefetch_count` when consuming. The
+`consumer_count` is the number of instances of your consumer to handle messages
+from that queue.  Connection pools are highly recommended.
 MySQL will require the [MySQL
 Connector](http://pypi.python.org/pypi/mysql-connector-python) instead of
 `mysqldb` in order for gevent to switch properly.
