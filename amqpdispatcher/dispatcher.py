@@ -125,8 +125,8 @@ class ConsumerPool(object):
                 try:
                     failed_greenlet.get()
                 except Exception as exc:
-                    amqp_proxy.reject(requeue=True)
-                    consumer.shutdown(exc)
+                    if not amqp_proxy.has_responded_to_message:
+                        amqp_proxy.reject(requeue=True)
                 self._create()
 
             greenlet = gevent.Greenlet(consumer.consume, amqp_proxy, msg)
@@ -141,23 +141,37 @@ class AMQPProxy(object):
     def __init__(self, channel, msg):
         self._channel = channel
         self._msg = msg
+        self._terminal_state = False
 
     @property
     def tag(self):
         return self._msg.delivery_info['delivery_tag']
 
+    @property
+    def has_responded_to_message(self):
+        return self._terminal_state
+
     def ack(self):
+        self._error_if_already_terminated()
         self._channel.basic.ack(self.tag)
 
     def nack(self):
+        self._error_if_already_terminated()
         self._channel.basic.nack(self.tag)
 
     def reject(self, requeue=True):
+        self._error_if_already_terminated()
         self._channel.basic.reject(self.tag, requeue=requeue)
 
     def publish(self, exchange, routing_key, headers, body):
         msg = Message(body, headers)
         self._channel.basic.publish(msg, exchange, routing_key)
+
+    def _error_if_already_terminated(self):
+        if self._terminal_state == True:
+            raise Exception('Already responded to message!')
+        else:
+            self._terminal_state = True
 
 
 def message_pump_greenthread(connection):
