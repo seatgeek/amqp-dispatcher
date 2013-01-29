@@ -63,6 +63,14 @@ YAML file for worker configuration.
 
 At the moment guest:guest are used to connect, just because I have gotten around to changing it.
 
+### Startup Configuration
+
+If you need to perform custom actions (configure your logging, create initial objects) you can add a startup handler.
+
+This is configured in the config yml with the `startup_handler` option.
+
+    startup_handler: amqpdispatcher.example_startup:startup
+
 ### Worker configuration
 
 Workers are autoloaded when AMQP Dispatcher starts. This means your worker must
@@ -108,3 +116,8 @@ And then a session created during the consume method.
             session = self.sessionmaker()
             # Do something with the session
             session.close()
+
+# Logging
+
+Logging is performed on the logger `amqp-dispatcher`. The RabbitMQ connection
+provided by Haigha will log on `amqp-dispatcher.haigha`.

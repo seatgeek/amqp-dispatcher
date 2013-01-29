@@ -13,6 +13,9 @@ from haigha.connection import Connection as haigha_Connection
 from haigha.connections import RabbitConnection
 from haigha.message import Message
 
+logger = logging.getLogger('amqp-dispatcher')
+logger.addHandler(logging.NullHandler())
+
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
     parser.add_argument('--config', metavar='config', type=str,  default='config.yml', help='path to the config file')
@@ -33,13 +36,22 @@ def connection_closed_cb():
     return
 
 def setup():
+    args = get_args_from_cli()
+    config = load(open(args.config).read())
+
+    startup_handler = load_module_object(config.get('startup_handler', lambda: True))
+    startup_handler()
+    logger.info('Startup handled')
+
     # Connect to AMQP broker with default connection and authentication
     # settings (assumes broker is on localhost)
     host = os.getenv('RABBITMQ_HOST')
+    rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
+    logger.info('Connecting to host {}'.format(host))
     conn = RabbitConnection(transport='gevent',
                                    host=host,
                                    close_cb=connection_closed_cb,
-                                   logger=logging.getLogger())
+                                   logger=rabbit_logger)
 
     # Start message pump
     message_pump_greenlet = gevent.Greenlet(message_pump_greenthread, conn)
@@ -48,8 +60,6 @@ def setup():
     channel = conn.channel()
     channel.add_close_listener(channel_closed_cb)
 
-    args = get_args_from_cli()
-    config = load(open(args.config).read())
 
     consumers = [
         ('test_queue', 'amqpdispatcher.example_consumer:consume'),
@@ -61,9 +71,7 @@ def setup():
         consumer_str = consumer.get('consumer')
         consumer_count = consumer.get('consumer_count', 1)
 
-        module_name, obj_name = consumer_str.split(':')
-        module = importlib.import_module(module_name)
-        consumer_klass = getattr(module, obj_name)
+        consumer_klass = load_consumer(consumer_str)
         consume_channel = conn.channel()
         consume_channel.basic.qos(prefetch_count=prefetch_count)
         pool = ConsumerPool(consume_channel, consumer_klass, consumer_count)
@@ -76,6 +84,18 @@ def setup():
 
     return message_pump_greenlet
 
+def load_module(module_name):
+    return importlib.import_module(module_name)
+
+def load_consumer(consumer_str):
+    logger.debug('Loading consumer {}'.format(consumer_str))
+    return load_module_object(consumer_str)
+
+def load_module_object(module_object_str):
+    module_name, obj_name = module_object_str.split(':')
+    module = load_module(module_name)
+    return getattr(module, obj_name)
+
 
 class ConsumerPool(object):
     def __init__(self, channel, klass, size=1):
@@ -86,7 +106,7 @@ class ConsumerPool(object):
             self._create()
 
     def _create(self):
-        print 'Creating'
+        logger.debug('Creating consumer instance: {}'.format(self._klass.__name__))
         self._pool.put(self._klass())
 
     def handle(self, msg):
@@ -95,15 +115,14 @@ class ConsumerPool(object):
             amqp_proxy = AMQPProxy(self._channel, msg)
 
             def put_back(successful_greenlet):
-                print 'Success! Putting consumer back'
+                logging.debug('Successful run, putting consumer back')
                 self._pool.put(consumer)
 
             def recreate(failed_greenlet):
-                print 'Recreating greenlet because there was a problem'
+                logger.info('Consume failed, recreating consumer')
                 try:
                     failed_greenlet.get()
                 except Exception as exc:
-                    print exc
                     amqp_proxy.reject(requeue=True)
                     consumer.shutdown(exc)
                 self._create()
@@ -140,7 +159,7 @@ class AMQPProxy(object):
 
 
 def message_pump_greenthread(connection):
-    print "Entering Message Pump"
+    logging.debug('Starting message pump')
     try:
         while connection is not None:
             # Pump
@@ -149,7 +168,7 @@ def message_pump_greenthread(connection):
             # Yield to other greenlets so they don't starve
             gevent.sleep()
     finally:
-        print "Leaving Message Pump"
+        logging.debug('Leaving message pump')
     return
 
 

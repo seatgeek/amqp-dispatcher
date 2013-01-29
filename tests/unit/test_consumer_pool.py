@@ -11,6 +11,7 @@ class TestConsumerPool(TestCase):
     def setUp(self):
         self.channel = MagicMock(Channel)
         self.consumer_class = MagicMock('consumer_class')
+        self.consumer_class.__name__ = 'Mock consumer class'
 
     def test_creates_consumer_specific_number_of_times(self):
         i = 3
