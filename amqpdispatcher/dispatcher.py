@@ -39,9 +39,10 @@ def setup():
     args = get_args_from_cli()
     config = load(open(args.config).read())
 
-    startup_handler = load_module_object(config.get('startup_handler', lambda: True))
-    startup_handler()
-    logger.info('Startup handled')
+    startup_handler_str = config.get('startup_handler')
+    if startup_handler_str is not None:
+        startup_handler()
+        logger.info('Startup handled')
 
     # Connect to AMQP broker with default connection and authentication
     # settings (assumes broker is on localhost)
