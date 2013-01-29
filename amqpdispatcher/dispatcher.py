@@ -115,7 +115,7 @@ class ConsumerPool(object):
             amqp_proxy = AMQPProxy(self._channel, msg)
 
             def put_back(successful_greenlet):
-                logging.debug('Successful run, putting consumer back')
+                logger.debug('Successful run, putting consumer back')
                 self._pool.put(consumer)
 
             def recreate(failed_greenlet):
