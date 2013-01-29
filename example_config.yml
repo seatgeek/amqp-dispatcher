@@ -1,5 +1,5 @@
 
-#startup_handler: examples.example_startup:startup
+startup_handler: examples.example_startup:startup
 
 consumers:
   - consumer: examples.example_consumer:Consumer

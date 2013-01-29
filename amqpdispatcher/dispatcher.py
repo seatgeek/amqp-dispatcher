@@ -41,6 +41,7 @@ def setup():
 
     startup_handler_str = config.get('startup_handler')
     if startup_handler_str is not None:
+        startup_handler = load_module_object(startup_handler_str)
         startup_handler()
         logger.info('Startup handled')
 
