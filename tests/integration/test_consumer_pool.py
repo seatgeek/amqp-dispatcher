@@ -54,3 +54,15 @@ class TestConsumerPoolHandlingMessage(TestCase):
         cp.handle(msg)
 
         result.get(timeout=1)
+
+    def test_channel_reject_is_called_when_erroring(self):
+        channel = MagicMock(name='channel')
+        msg = MagicMock(name='msg')
+        result, consumer = create_error_consumer()
+
+        cp = ConsumerPool(channel, consumer, gevent.Greenlet)
+        cp.handle(msg)
+        result.get(timeout=1)
+
+        tag = msg.delivery_info['delivery_tag']
+        channel.basic.reject.assert_called_once_with(tag, requeue=True)
