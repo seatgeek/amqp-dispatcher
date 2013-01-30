@@ -8,4 +8,7 @@ def startup():
     ch.setFormatter(formatter)
     ad_logger = logging.getLogger('amqp-dispatcher')
     ad_logger.setLevel(logging.DEBUG)
-    ad_logger.addHandler(ch)
+
+    root_logger = logging.getLogger('')
+    root_logger.setLevel(logging.DEBUG)
+    root_logger.addHandler(ch)
