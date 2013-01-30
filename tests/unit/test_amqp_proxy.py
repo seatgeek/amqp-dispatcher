@@ -14,7 +14,6 @@ class TestAmqpProxy(TestCase):
         self.msg = MagicMock(name='msg')
         self.terminals = ['ack', 'nack', 'reject']
 
-
     def test_terminal_twice_raises_error(self):
         for terminal in self.terminals:
             proxy = AMQPProxy(self.channel, self.msg)

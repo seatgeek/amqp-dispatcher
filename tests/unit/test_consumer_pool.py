@@ -18,5 +18,4 @@ class TestConsumerPool(TestCase):
         pool = ConsumerPool(self.channel, self.consumer_class, i)
         calls = [call() for i in range(i)]
 
-
         self.consumer_class.assert_has_calls(calls)
