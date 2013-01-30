@@ -5,8 +5,6 @@ from haigha.channel import Channel
 import gevent
 
 from amqpdispatcher.dispatcher import ConsumerPool
-from amqpdispatcher.process_containers import GeventProcessContainer
-
 
 
 class TestConsumerPool(TestCase):
@@ -22,7 +20,7 @@ class TestConsumerPool(TestCase):
         pool = ConsumerPool(
             self.channel,
             self.consumer_class,
-            self.process_container,
+            self.greenlet_maker,
             i,
         )
         calls = [call() for i in range(i)]

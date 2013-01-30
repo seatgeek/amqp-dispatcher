@@ -139,11 +139,10 @@ class ConsumerPool(object):
                 shutdown_greenlet.link(create_wrapper)
                 shutdown_greenlet.start()
 
-            greenlet = gevent.Greenlet(consumer.consume, amqp_proxy, msg)
+            greenlet = self._gm(consumer.consume, amqp_proxy, msg)
             greenlet.link_value(put_back)
             greenlet.link_exception(recreate)
             greenlet.start()
-
         self._gm(func).start()
 
 class AMQPProxy(object):
