@@ -33,6 +33,20 @@ def create_error_consumer():
 
     return result, Consumer
 
+
+def create_acking_error_consumer():
+    result = AsyncResult()
+    class Consumer(object):
+
+        def consume(self, proxy, msg):
+            proxy.ack()
+            raise Exception()
+
+        def shutdown(self, exception):
+            result.set()
+
+    return result, Consumer
+
 class TestConsumerPoolHandlingMessage(TestCase):
 
     def test_consumers_consume_is_run(self):
@@ -66,3 +80,15 @@ class TestConsumerPoolHandlingMessage(TestCase):
 
         tag = msg.delivery_info['delivery_tag']
         channel.basic.reject.assert_called_once_with(tag, requeue=True)
+
+    def test_channel_reject_is_not_called_when_erroring_after_ack(self):
+        channel = MagicMock(name='channel')
+        msg = MagicMock(name='msg')
+        result, consumer = create_acking_error_consumer()
+
+        cp = ConsumerPool(channel, consumer, gevent.Greenlet)
+        cp.handle(msg)
+        result.get(timeout=1)
+
+        tag = msg.delivery_info['delivery_tag']
+        self.assertEqual(channel.basic.reject.mock_calls, [])
