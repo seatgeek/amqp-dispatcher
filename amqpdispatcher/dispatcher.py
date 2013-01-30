@@ -12,9 +12,6 @@ from haigha.connection import Connection as haigha_Connection
 from haigha.connections import RabbitConnection
 from haigha.message import Message
 
-from amqpdispatcher.process_containers import GeventProcessContainer
-
-
 logger = logging.getLogger('amqp-dispatcher')
 logger.addHandler(logging.NullHandler())
 
@@ -81,7 +78,7 @@ def setup():
         pool = ConsumerPool(
             consume_channel,
             consumer_klass,
-            GeventProcessContainer(gevent),
+            gevent.Greenlet,
             consumer_count
         )
 
@@ -108,11 +105,11 @@ def load_module_object(module_object_str):
 
 
 class ConsumerPool(object):
-    def __init__(self, channel, klass, process_container, size=1):
+    def __init__(self, channel, klass, greenlet_maker, size=1):
         self._channel = channel
         self._pool = gevent.queue.Queue()
         self._klass = klass
-        self._pc = process_container
+        self._gm = greenlet_maker
         for i in range(size):
             self._create()
 
@@ -147,7 +144,7 @@ class ConsumerPool(object):
             greenlet.link_exception(recreate)
             greenlet.start()
 
-        self._pc.spawn(func)
+        self._gm(func).start()
 
 class AMQPProxy(object):
 

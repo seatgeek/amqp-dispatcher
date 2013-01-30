@@ -2,16 +2,18 @@ from unittest import TestCase
 
 from mock import MagicMock, call
 from haigha.channel import Channel
+import gevent
 
 from amqpdispatcher.dispatcher import ConsumerPool
 from amqpdispatcher.process_containers import GeventProcessContainer
+
 
 
 class TestConsumerPool(TestCase):
 
     def setUp(self):
         self.channel = MagicMock(Channel)
-        self.process_container = MagicMock(GeventProcessContainer)
+        self.greenlet_maker = MagicMock(gevent.Greenlet)
         self.consumer_class = MagicMock('consumer_class')
         self.consumer_class.__name__ = 'Mock consumer class'
 
