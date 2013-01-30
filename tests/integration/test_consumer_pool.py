@@ -48,7 +48,7 @@ class TestConsumerPoolHandlingMessage(TestCase):
     def test_consumers_shutdown_is_called_when_erroring(self):
         channel = MagicMock(name='channel')
         msg = MagicMock(name='msg')
-        result, consumer = create_working_consumer()
+        result, consumer = create_error_consumer()
 
         cp = ConsumerPool(channel, consumer, gevent.Greenlet)
         cp.handle(msg)
