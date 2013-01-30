@@ -8,10 +8,12 @@ from yaml import load
 
 import gevent
 import gevent.queue
-
 from haigha.connection import Connection as haigha_Connection
 from haigha.connections import RabbitConnection
 from haigha.message import Message
+
+from amqpdispatcher.process_containers import GeventProcessContainer
+
 
 logger = logging.getLogger('amqp-dispatcher')
 logger.addHandler(logging.NullHandler())
@@ -76,7 +78,13 @@ def setup():
         consumer_klass = load_consumer(consumer_str)
         consume_channel = conn.channel()
         consume_channel.basic.qos(prefetch_count=prefetch_count)
-        pool = ConsumerPool(consume_channel, consumer_klass, consumer_count)
+        pool = ConsumerPool(
+            consume_channel,
+            consumer_klass,
+            GeventProcessContainer(gevent),
+            consumer_count
+        )
+
         consume_channel.basic.consume(
             queue=queue_name,
             consumer=pool.handle,
@@ -100,10 +108,11 @@ def load_module_object(module_object_str):
 
 
 class ConsumerPool(object):
-    def __init__(self, channel, klass, size=1):
+    def __init__(self, channel, klass, process_container, size=1):
         self._channel = channel
         self._pool = gevent.queue.Queue()
         self._klass = klass
+        self._pc = process_container
         for i in range(size):
             self._create()
 
@@ -121,7 +130,7 @@ class ConsumerPool(object):
                 self._pool.put(consumer)
 
             def recreate(failed_greenlet):
-                logger.info('Consume failed, recreating consumer')
+                logger.info('Consume failed, shutting down consumer')
                 if not amqp_proxy.has_responded_to_message:
                     amqp_proxy.reject(requeue=True)
                 shutdown_greenlet = gevent.Greenlet(
@@ -138,7 +147,7 @@ class ConsumerPool(object):
             greenlet.link_exception(recreate)
             greenlet.start()
 
-        gevent.spawn(func)
+        self._pc.spawn(func)
 
 class AMQPProxy(object):
 
