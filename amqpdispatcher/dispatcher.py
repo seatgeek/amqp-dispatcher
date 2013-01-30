@@ -122,12 +122,16 @@ class ConsumerPool(object):
 
             def recreate(failed_greenlet):
                 logger.info('Consume failed, recreating consumer')
-                try:
-                    failed_greenlet.get()
-                except Exception as exc:
-                    if not amqp_proxy.has_responded_to_message:
-                        amqp_proxy.reject(requeue=True)
-                self._create()
+                if not amqp_proxy.has_responded_to_message:
+                    amqp_proxy.reject(requeue=True)
+                shutdown_greenlet = gevent.Greenlet(
+                    consumer.shutdown,
+                    failed_greenlet.exception
+                )
+                def create_wrapper(*args):
+                    self._create()
+                shutdown_greenlet.link(create_wrapper)
+                shutdown_greenlet.start()
 
             greenlet = gevent.Greenlet(consumer.consume, amqp_proxy, msg)
             greenlet.link_value(put_back)
