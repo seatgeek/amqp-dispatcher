@@ -60,6 +60,8 @@ YAML file for worker configuration.
 ### Environment Variables
 
 `RABBITMQ_HOST` - Host to connect to!
+`RABBITMQ_USER` - Username to connect with
+`RABBITMQ_PASS` - Password to connect with
 
 At the moment guest:guest are used to connect, just because I have gotten around to changing it.
 

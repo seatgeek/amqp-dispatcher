@@ -46,11 +46,15 @@ def setup():
 
     # Connect to AMQP broker with default connection and authentication
     # settings (assumes broker is on localhost)
-    host = os.getenv('RABBITMQ_HOST')
+    host = os.getenv('RABBITMQ_HOST', 'localhost')
+    user = os.getenv('RABBITMQ_USER', 'guest')
+    password = os.getenv('RABBITMQ_PASS', 'guest')
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     logger.info('Connecting to host {}'.format(host))
     conn = RabbitConnection(transport='gevent',
                                    host=host,
+                                   user=user,
+                                   password=password,
                                    close_cb=connection_closed_cb,
                                    logger=rabbit_logger)
 
