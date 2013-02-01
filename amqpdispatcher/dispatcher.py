@@ -55,7 +55,7 @@ def setup():
     user = os.getenv('RABBITMQ_USER', 'guest')
     password = os.getenv('RABBITMQ_PASS', 'guest')
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
-    logger.info('Connecting to host {}'.format(host))
+    logger.info('Connecting to host {0}'.format(host))
     conn = RabbitConnection(transport='gevent',
                                    host=host,
                                    user=user,
@@ -104,7 +104,7 @@ def load_module(module_name):
     return importlib.import_module(module_name)
 
 def load_consumer(consumer_str):
-    logger.debug('Loading consumer {}'.format(consumer_str))
+    logger.debug('Loading consumer {0}'.format(consumer_str))
     return load_module_object(consumer_str)
 
 def load_module_object(module_object_str):
@@ -123,7 +123,7 @@ class ConsumerPool(object):
             self._create()
 
     def _create(self):
-        logger.debug('Creating consumer instance: {}'.format(self._klass.__name__))
+        logger.debug('Creating consumer instance: {0}'.format(self._klass.__name__))
         self._pool.put(self._klass())
 
     def handle(self, msg):
