@@ -3,7 +3,5 @@ gevent
 haigha
 mock
 nose
-pea
 pyyaml
-sphinx
 -e git://github.com/lacostej/nosyd.git#egg=nosyd
