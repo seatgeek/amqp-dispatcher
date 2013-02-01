@@ -2,6 +2,7 @@ argparse
 coverage
 gevent
 haigha
+importlib
 mock
 nose
 pyyaml
