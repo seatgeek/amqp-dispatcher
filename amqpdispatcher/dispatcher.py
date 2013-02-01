@@ -13,7 +13,12 @@ from haigha.connections import RabbitConnection
 from haigha.message import Message
 
 logger = logging.getLogger('amqp-dispatcher')
-logger.addHandler(logging.NullHandler())
+
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+logger.addHandler(NullHandler())
 
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
