@@ -4,7 +4,7 @@ import argparse
 import importlib
 import logging
 import os
-from yaml import load
+from yaml import safe_load as load
 
 import gevent
 import gevent.queue
