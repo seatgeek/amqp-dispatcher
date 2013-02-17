@@ -4,13 +4,14 @@ import argparse
 import importlib
 import logging
 import os
-from yaml import safe_load as load
+import sys
 
-import gevent
-import gevent.queue
 from haigha.connection import Connection as haigha_Connection
 from haigha.connections import RabbitConnection
 from haigha.message import Message
+from yaml import safe_load as load
+import gevent
+import gevent.queue
 
 logger = logging.getLogger('amqp-dispatcher')
 
@@ -33,11 +34,12 @@ def channel_closed_cb(ch):
     ch = None
     return
 
-def connection_closed_cb():
-    print "AMQP broker connection closed; close-info: %s" % (
-      connection.close_info,)
-    connection = None
-    return
+def create_connection_closed_cb(connection):
+    def connection_closed_cb():
+        print "AMQP broker connection closed; close-info: %s" % (
+          connection.close_info,)
+        connection = None
+    return connection_closed_cb
 
 def setup():
     args = get_args_from_cli()
@@ -60,20 +62,12 @@ def setup():
                                    host=host,
                                    user=user,
                                    password=password,
-                                   close_cb=connection_closed_cb,
                                    logger=rabbit_logger)
-
-    # Start message pump
-    message_pump_greenlet = gevent.Greenlet(message_pump_greenthread, conn)
+    conn._close_cb = create_connection_closed_cb(conn)
 
     # Create message channel
     channel = conn.channel()
     channel.add_close_listener(channel_closed_cb)
-
-
-    consumers = [
-        ('test_queue', 'amqpdispatcher.example_consumer:consume'),
-    ]
 
     for consumer in config['consumers']:
         queue_name = consumer['queue']
@@ -97,6 +91,9 @@ def setup():
             no_ack=False,
         )
         gevent.sleep()
+
+    message_pump_greenlet = gevent.Greenlet(
+        message_pump_greenthread, conn)
 
     return message_pump_greenlet
 
@@ -194,6 +191,7 @@ class AMQPProxy(object):
 
 def message_pump_greenthread(connection):
     logging.debug('Starting message pump')
+    exit_code = 0
     try:
         while connection is not None:
             # Pump
@@ -201,15 +199,18 @@ def message_pump_greenthread(connection):
 
             # Yield to other greenlets so they don't starve
             gevent.sleep()
+    except Exception as exc:
+        logger.exception(exc)
+        exit_code = 1
     finally:
         logging.debug('Leaving message pump')
-    return
-
+    return exit_code
 
 def main():
     greenlet = setup()
     greenlet.start()
     greenlet.join()
+    sys.exit(greenlet.get())
 
 
 if __name__ == '__main__':
