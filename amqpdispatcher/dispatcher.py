@@ -4,6 +4,8 @@ import argparse
 import importlib
 import logging
 import os
+import random
+import socket
 import sys
 
 from haigha.connection import Connection as haigha_Connection
@@ -41,6 +43,18 @@ def create_connection_closed_cb(connection):
         connection = None
     return connection_closed_cb
 
+
+def connect_to_hosts(connector, hosts, **kwargs):
+    for host in hosts:
+        logger.info('Trying to connect to host: {0}'.format(host))
+        try:
+            conn = connector(host=host, **kwargs)
+            return conn
+        except socket.error:
+            logger.info('Error connecting to {0}'.format(host))
+    logger.error('Could not connect to any hosts')
+
+
 def setup():
     args = get_args_from_cli()
     config = load(open(args.config).read())
@@ -51,18 +65,26 @@ def setup():
         startup_handler()
         logger.info('Startup handled')
 
-    # Connect to AMQP broker with default connection and authentication
-    # settings (assumes broker is on localhost)
-    host = os.getenv('RABBITMQ_HOST', 'localhost')
+    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
+    if hosts_string is not None:
+        hosts = hosts_string.split(',')
+        logger.info('Hosts are: {0}'.format(hosts))
+        random.shuffle(hosts)
+    else:
+        host = [os.getenv('RABBITMQ_HOST', 'localhost')]
     user = os.getenv('RABBITMQ_USER', 'guest')
     password = os.getenv('RABBITMQ_PASS', 'guest')
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
-    logger.info('Connecting to host {0}'.format(host))
-    conn = RabbitConnection(transport='gevent',
-                                   host=host,
-                                   user=user,
-                                   password=password,
-                                   logger=rabbit_logger)
+    conn = connect_to_hosts(
+        RabbitConnection,
+        hosts,
+        transport='gevent',
+        user=user,
+        password=password,
+        logger=rabbit_logger
+    )
+    if conn is None:
+        return
     conn._close_cb = create_connection_closed_cb(conn)
 
     # Create message channel
@@ -208,9 +230,10 @@ def message_pump_greenthread(connection):
 
 def main():
     greenlet = setup()
-    greenlet.start()
-    greenlet.join()
-    sys.exit(greenlet.get())
+    if greenlet is not None:
+        greenlet.start()
+        greenlet.join()
+        sys.exit(greenlet.get())
 
 
 if __name__ == '__main__':

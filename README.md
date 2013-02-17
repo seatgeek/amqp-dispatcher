@@ -7,6 +7,11 @@ A daemon to run AMQP consumers
 
     RABBITMQ_HOST=rabbitmq.example.com amqp-dispatcher --config amqp-dispatcher-config.yml
 
+The environment variable `RABBITMQ\_HOSTS` can also be used which will cause
+attempt to connect to a host in a random order. The list should be comma separated.
+
+    RABBITMQ_HOSTS=rabbitmq1.example.com.rabbitmq2.example.com
+
 ## Consumers
 
 Consumers are a class with 2 required methods: `consume` and `shutdown`. AMQP
