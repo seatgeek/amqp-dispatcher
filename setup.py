@@ -9,7 +9,7 @@ def read(fname):
 def run_setup():
     setup(
         name='amqp-dispatcher',
-        version='0.0.5',
+        version='0.0.6',
         description='A daemon gevent to run AMQP consumers',
         keywords = 'amqp',
         url='http://github.com/philipcristiano/amqp-dispatcher',
