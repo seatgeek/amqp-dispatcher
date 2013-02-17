@@ -71,7 +71,7 @@ def setup():
         logger.info('Hosts are: {0}'.format(hosts))
         random.shuffle(hosts)
     else:
-        host = [os.getenv('RABBITMQ_HOST', 'localhost')]
+        hosts = [os.getenv('RABBITMQ_HOST', 'localhost')]
     user = os.getenv('RABBITMQ_USER', 'guest')
     password = os.getenv('RABBITMQ_PASS', 'guest')
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
