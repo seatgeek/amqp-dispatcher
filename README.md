@@ -10,7 +10,7 @@ A daemon to run AMQP consumers
 The environment variable `RABBITMQ\_HOSTS` can also be used which will cause
 attempt to connect to a host in a random order. The list should be comma separated.
 
-    RABBITMQ_HOSTS=rabbitmq1.example.com.rabbitmq2.example.com
+    RABBITMQ_HOSTS=rabbitmq1.example.com,rabbitmq2.example.com
 
 ## Consumers
 
