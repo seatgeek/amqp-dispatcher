@@ -74,6 +74,7 @@ def setup():
         hosts = [os.getenv('RABBITMQ_HOST', 'localhost')]
     user = os.getenv('RABBITMQ_USER', 'guest')
     password = os.getenv('RABBITMQ_PASS', 'guest')
+    vhost = os.getenv('RABBITMQ_VHOST', '/')
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     conn = connect_to_hosts(
         RabbitConnection,
@@ -81,6 +82,7 @@ def setup():
         transport='gevent',
         user=user,
         password=password,
+        vhost=vhost,
         logger=rabbit_logger
     )
     if conn is None:

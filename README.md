@@ -70,6 +70,8 @@ YAML file for worker configuration.
 
 `RABBITMQ_PASS` - Password to connect with
 
+`RABBITMQ_VHOST` - Virtual host to use (default is "/")
+
 At the moment `guest:guest` are used to connect, just because I have gotten around to changing it.
 
 ### Startup Configuration
