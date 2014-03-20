@@ -15,13 +15,8 @@ from yaml import safe_load as load
 import gevent
 import gevent.queue
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('amqp-dispatcher')
-
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-logger.addHandler(NullHandler())
 
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
@@ -31,15 +26,15 @@ def get_args_from_cli():
     return args
 
 def channel_closed_cb(ch):
-    print "AMQP channel closed; close-info: %s" % (
-      ch.close_info,)
+    logger.info("AMQP channel closed; close-info: %s" % (
+      ch.close_info,))
     ch = None
     return
 
 def create_connection_closed_cb(connection):
     def connection_closed_cb():
-        print "AMQP broker connection closed; close-info: %s" % (
-          connection.close_info,)
+        logger.info("AMQP broker connection closed; close-info: %s" % (
+          connection.close_info,))
         connection = None
     return connection_closed_cb
 
@@ -86,6 +81,7 @@ def setup():
         logger=rabbit_logger
     )
     if conn is None:
+        logger.warning("No connection -- returning")
         return
     conn._close_cb = create_connection_closed_cb(conn)
 
@@ -223,8 +219,8 @@ def message_pump_greenthread(connection):
 
             # Yield to other greenlets so they don't starve
             gevent.sleep()
-    except Exception as exc:
-        logger.exception(exc)
+    except Exception:
+        logger.exception("error in message pump thread")
         exit_code = 1
     finally:
         logging.debug('Leaving message pump')
