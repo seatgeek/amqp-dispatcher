@@ -9,7 +9,7 @@ import socket
 import sys
 
 from haigha.connection import Connection as haigha_Connection
-from haigha.connections import RabbitConnection
+from haigha.connections.rabbit_connection import RabbitConnection
 from haigha.message import Message
 from yaml import safe_load as load
 import gevent
