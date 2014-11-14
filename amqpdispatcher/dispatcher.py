@@ -54,9 +54,9 @@ def create_queue(connection, queue):
     logger.info("Create queue {}".format(name))
     durable = bool(queue.get('durable', True))
     auto_delete = bool(queue.get('auto_delete', False))
+    exclusive = bool(queue.get('exclusive', False))
 
     passive = False
-    exclusive = False
     nowait = False
 
     arguments = {}
