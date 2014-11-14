@@ -38,7 +38,6 @@ def create_connection_closed_cb(connection):
         connection = None
     return connection_closed_cb
 
-
 def connect_to_hosts(connector, hosts, **kwargs):
     for host in hosts:
         logger.info('Trying to connect to host: {0}'.format(host))
@@ -49,6 +48,58 @@ def connect_to_hosts(connector, hosts, **kwargs):
             logger.info('Error connecting to {0}'.format(host))
     logger.error('Could not connect to any hosts')
 
+def create_queue(connection, queue):
+    """creates a queue synchronously"""
+    name = queue['queue']
+    logger.info("Create queue {}".format(name))
+    durable = bool(queue.get('durable', True))
+    auto_delete = bool(queue.get('auto_delete', False))
+
+    passive = False
+    exclusive = False
+    nowait = False
+
+    arguments = {}
+    if queue.get('x_dead_letter_exchange'):
+        arguments['x-dead-letter-exchange'] = queue.get('x_dead_letter_exchange')
+    if queue.get('x_dead_letter_routing_key'):
+        arguments['x-dead-letter-routing-key'] = queue.get('x_dead_letter_routing_key')
+    if queue.get('x_max_length'):
+        arguments['x-max-length'] = queue.get('x_max_length')
+    if queue.get('x_expires'):
+        arguments['x-expires'] = queue.get('x_expires')
+    if queue.get('x_message_ttl'):
+        arguments['x-message-ttl'] = queue.get('x_message_ttl')
+
+    ch = connection.channel(synchronous=True)
+    ret = ch.queue.declare(
+        queue=name,
+        passive=passive,
+        exclusive=exclusive,
+        durable=durable,
+        auto_delete=auto_delete,
+        nowait=nowait,
+        arguments=arguments
+    )
+    name, message_count, consumer_count = ret
+    logger.info("Queue {} - presently {} messages and {} consumers connected".format(
+        name, message_count, consumer_count))
+
+def bind_queue(connection, queue):
+    """binds a queue to the bindings identified in the doc"""
+    bindings = queue.get('bindings')
+    ch = connection.channel(synchronous=True)
+    name = queue.get('queue')
+    for binding in bindings:
+        exchange = binding['exchange']
+        key = binding['routing_key']
+        logger.info("bind {} to {}:{}".format(name, exchange, key))
+        ch.queue.bind(name, exchange, key, nowait=False)
+
+def create_and_bind_queues(connection, queues):
+    for queue in queues:
+        create_queue(connection, queue)
+        bind_queue(connection, queue)
 
 def setup():
     args = get_args_from_cli()
@@ -83,6 +134,11 @@ def setup():
     if conn is None:
         logger.warning("No connection -- returning")
         return
+
+    queues = config.get('queues')
+    if queues:
+        create_and_bind_queues(conn, queues)
+
     conn._close_cb = create_connection_closed_cb(conn)
 
     # Create message channel
