@@ -289,7 +289,7 @@ class AMQPProxy(object):
         self._channel.basic.publish(msg, exchange, routing_key)
 
     def _error_if_already_terminated(self):
-        if self._terminal_state == True:
+        if self._terminal_state:
             raise Exception('Already responded to message!')
         else:
             self._terminal_state = True
