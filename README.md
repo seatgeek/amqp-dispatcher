@@ -82,6 +82,61 @@ This is configured in the config yml with the `startup_handler` option.
 
     startup_handler: amqpdispatcher.example_startup:startup
 
+### Queue configuration
+
+Queues can be created on the fly by amqp dispatcher, and may bind existing exchanges on the fly as well.
+
+There are a few obvious constraints:
+
+* To create a non-passive queue (typical behavior) the current user must have `configure=queue` permission
+* To bind to an exchange, the current user must have `read` permission on the binding exchange
+
+##### Required
+
+* `queue`: name of the queue
+
+##### Optional Parameters
+
+* `durable`: queue created in "durable" mode (default = True)
+* `auto_delete`: queue created in "auto_delete" mode (default = False), meaning
+it will be deleted automatically once all consumers disconnect from it (e.g. on restart)
+* `exclusive`: queue created in "exclusive" mode (default = False) meaning it will only be accessible by this process
+* `x_dead_letter_exchange`: name of dead letter exchange
+* `x_dead_letter_routing_key`: dead letter routing key
+* `x_max_length`: maximum length of ready messages. (default = INFINITE)
+* `x_expires`: How long a queue can be unused for before it is automatically deleted (milliseconds) (default=INFINITE)
+* `x_message_ttl`: How long a message published to a queue can live before it is discarded (milliseconds) (default=INFINITE)
+
+##### Bindings
+
+`bindings`  should contain a list of `exchange`/`routing_key` pairs and defines the binding for the queue (there can be multiple)
+
+A complete configuration example would look like:
+
+    queues:
+      - queue: notify_mat_job
+        durable: true
+        auto_delete: false
+        passive: true
+        exclusive: false
+        x_dead_letter_exchange: null
+        x_dead_letter_routing_key: null
+        x_max_length: null
+        x_expires: null
+        x_message_ttl: null
+        bindings:
+          - exchange: notify
+            routing_key: transaction.*
+          - exchange: notify
+            routing_key: click.*
+
+      - queue: notify_apsalar_job
+        bindings:
+          - exchange: notify
+            routing_key: transaction.*
+          - exchange: notify
+            routing_key: click.*
+
 ### Worker configuration
 
 Workers are autoloaded when AMQP Dispatcher starts. This means your worker must
