@@ -7,8 +7,8 @@ import os
 import random
 import socket
 import sys
+import urlparse
 
-from haigha.connection import Connection as haigha_Connection
 from haigha.connections.rabbit_connection import RabbitConnection
 from haigha.message import Message
 from yaml import safe_load as load
@@ -101,6 +101,45 @@ def create_and_bind_queues(connection, queues):
         create_queue(connection, queue)
         bind_queue(connection, queue)
 
+def get_connection_params_from_environment():
+    """returns tuple containing
+    HOSTS, USER, PASSWORD, VHOST
+    """
+    connection_string = os.getenv('RABBITMQ_URL', None)
+    hosts = user = password = vhost = None
+
+    # connection string, all contained
+    if connection_string:
+        cp = urlparse.urlparse(connection_string)
+        hosts_string = cp.hostname
+        hosts = hosts_string.split(",")
+        if cp.port:
+            hosts = [h + ":" + str(cp.port) for h in hosts]
+        user = cp.username
+        password = cp.password
+        vhost = cp.path
+        return (hosts, user, password, vhost)
+
+    # find hosts
+    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
+    if hosts_string:
+        hosts = hosts_string.split(",")
+
+    host = os.getenv('RABBITMQ_HOST', None)
+    if host:
+        hosts = host.split(",")
+        if len(hosts) > 1:
+            raise Exception("invalid rabbitmq connection info: RABBITMQ_HOST requests a single host, received {}".format(host))
+
+    if hosts is None:
+        raise Exception("missing rabbitmq connection info: RABBITMQ_URL, RABBITMQ_HOSTS, or RABBITMQ_HOST is required")
+
+    # find other parameters from env variables
+    user = os.getenv('RABBITMQ_USER', 'guest')
+    password = os.getenv('RABBITMQ_PASS', 'guest')
+    vhost = os.getenv('RABBITMQ_VHOST', '/')
+    return hosts, user, password, vhost
+
 def setup():
     args = get_args_from_cli()
     config = load(open(args.config).read())
@@ -111,16 +150,7 @@ def setup():
         startup_handler()
         logger.info('Startup handled')
 
-    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
-    if hosts_string is not None:
-        hosts = hosts_string.split(',')
-        logger.info('Hosts are: {0}'.format(hosts))
-        random.shuffle(hosts)
-    else:
-        hosts = [os.getenv('RABBITMQ_HOST', 'localhost')]
-    user = os.getenv('RABBITMQ_USER', 'guest')
-    password = os.getenv('RABBITMQ_PASS', 'guest')
-    vhost = os.getenv('RABBITMQ_VHOST', '/')
+    hosts, user, password, vhost = get_connection_params_from_environment()
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     conn = connect_to_hosts(
         RabbitConnection,
