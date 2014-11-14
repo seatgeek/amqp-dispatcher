@@ -305,8 +305,8 @@ def message_pump_greenthread(connection):
 
             # Yield to other greenlets so they don't starve
             gevent.sleep()
-    except Exception as exc:
-        logger.exception(exc)
+    except Exception:
+        logger.exception("error in message pump thread")
         exit_code = 1
     finally:
         logging.debug('Leaving message pump')
