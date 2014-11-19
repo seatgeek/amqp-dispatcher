@@ -64,21 +64,12 @@ YAML file for worker configuration.
 
 ### Environment Variables
 
-`RABBITMQ_URL`   - Connection string of the form `amqp://USER:PASS@HOST:PORT/VHOST`
-
-If `RABBITMQ_URL` is present, the following parameters are ignored
-
-`RABBITMQ_HOSTS` - Comma separated list of hosts to connect to
-
-`RABBITMQ_HOST`  - Host to connect to
-
-`RABBITMQ_USER`  - Username to connect with (default is "guest")
-
-`RABBITMQ_PASS`  - Password to connect with (default is "guest")
-
-`RABBITMQ_VHOST` - Virtual host to use (default is "/")
-
-At the moment `guest:guest` are used to connect, just because I have gotten around to changing it.
+- `RABBITMQ_URL`: Connection string of the form `amqp://USER:PASS@HOST:PORT/VHOST`, `RABBITMQ_URL` is present, all other environment variables are ignored
+- `RABBITMQ_HOSTS` - Comma separated list of hosts to connect to
+- `RABBITMQ_HOST`  - Host to connect to
+- `RABBITMQ_USER`  - Username to connect with (default is `guest`)
+- `RABBITMQ_PASS`  - Password to connect with (default is `guest`)
+- `RABBITMQ_VHOST` - Virtual host to use (default is `/`)
 
 ### Startup Configuration
 
