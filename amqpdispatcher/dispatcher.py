@@ -35,7 +35,6 @@ def create_connection_closed_cb(connection):
     def connection_closed_cb():
         logger.info("AMQP broker connection closed; close-info: %s" % (
           connection.close_info,))
-        connection = None
     return connection_closed_cb
 
 def connect_to_hosts(connector, hosts, **kwargs):
