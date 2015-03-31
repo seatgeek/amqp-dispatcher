@@ -2,14 +2,15 @@
 from unittest import TestCase
 
 from gevent.event import AsyncResult
-from haigha.channel import Channel
-from mock import MagicMock, call
+from mock import MagicMock
 import gevent
 
 from amqpdispatcher.dispatcher import ConsumerPool
 
+
 def create_working_consumer():
     result = AsyncResult()
+
     class Consumer(object):
 
         def consume(self, proxy, msg):
@@ -23,6 +24,7 @@ def create_working_consumer():
 
 def create_error_consumer():
     result = AsyncResult()
+
     class Consumer(object):
 
         def consume(self, proxy, msg):
@@ -36,6 +38,7 @@ def create_error_consumer():
 
 def create_acking_error_consumer():
     result = AsyncResult()
+
     class Consumer(object):
 
         def consume(self, proxy, msg):
@@ -46,6 +49,7 @@ def create_acking_error_consumer():
             result.set()
 
     return result, Consumer
+
 
 class TestConsumerPoolHandlingMessage(TestCase):
 

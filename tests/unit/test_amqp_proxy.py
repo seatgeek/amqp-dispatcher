@@ -1,8 +1,7 @@
 from itertools import permutations
 from unittest import TestCase
 
-from mock import MagicMock, call
-from haigha.channel import Channel
+from mock import MagicMock
 
 from amqpdispatcher.dispatcher import AMQPProxy
 

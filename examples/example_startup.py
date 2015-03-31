@@ -1,9 +1,11 @@
 import logging
 
+
 def startup():
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(format)
 
     ch.setFormatter(formatter)
     ad_logger = logging.getLogger('amqp-dispatcher')

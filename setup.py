@@ -4,6 +4,7 @@ from setuptools import setup
 
 import amqpdispatcher
 
+
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -13,7 +14,7 @@ def run_setup():
         name='amqp-dispatcher',
         version=amqpdispatcher.__version__,
         description='A daemon gevent to run AMQP consumers',
-        keywords = 'amqp',
+        keywords='amqp',
         url='http://github.com/philipcristiano/amqp-dispatcher',
         author='Philip Cristiano',
         author_email='philipcristiano@gmail.com',
