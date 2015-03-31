@@ -7,21 +7,16 @@ import os
 import random
 import socket
 import sys
+import urlparse
 
-from haigha.connection import Connection as haigha_Connection
 from haigha.connections.rabbit_connection import RabbitConnection
 from haigha.message import Message
 from yaml import safe_load as load
 import gevent
 import gevent.queue
 
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('amqp-dispatcher')
-
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-logger.addHandler(NullHandler())
 
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
@@ -31,18 +26,17 @@ def get_args_from_cli():
     return args
 
 def channel_closed_cb(ch):
-    print "AMQP channel closed; close-info: %s" % (
-      ch.close_info,)
+    logger.info("AMQP channel closed; close-info: %s" % (
+      ch.close_info,))
     ch = None
     return
 
 def create_connection_closed_cb(connection):
     def connection_closed_cb():
-        print "AMQP broker connection closed; close-info: %s" % (
-          connection.close_info,)
+        logger.info("AMQP broker connection closed; close-info: %s" % (
+          connection.close_info,))
         connection = None
     return connection_closed_cb
-
 
 def connect_to_hosts(connector, hosts, **kwargs):
     for host in hosts:
@@ -54,6 +48,97 @@ def connect_to_hosts(connector, hosts, **kwargs):
             logger.info('Error connecting to {0}'.format(host))
     logger.error('Could not connect to any hosts')
 
+def create_queue(connection, queue):
+    """creates a queue synchronously"""
+    name = queue['queue']
+    logger.info("Create queue {}".format(name))
+    durable = bool(queue.get('durable', True))
+    auto_delete = bool(queue.get('auto_delete', False))
+    exclusive = bool(queue.get('exclusive', False))
+
+    passive = False
+    nowait = False
+
+    arguments = {}
+    if queue.get('x_dead_letter_exchange'):
+        arguments['x-dead-letter-exchange'] = queue.get('x_dead_letter_exchange')
+    if queue.get('x_dead_letter_routing_key'):
+        arguments['x-dead-letter-routing-key'] = queue.get('x_dead_letter_routing_key')
+    if queue.get('x_max_length'):
+        arguments['x-max-length'] = queue.get('x_max_length')
+    if queue.get('x_expires'):
+        arguments['x-expires'] = queue.get('x_expires')
+    if queue.get('x_message_ttl'):
+        arguments['x-message-ttl'] = queue.get('x_message_ttl')
+
+    ch = connection.channel(synchronous=True)
+    ret = ch.queue.declare(
+        queue=name,
+        passive=passive,
+        exclusive=exclusive,
+        durable=durable,
+        auto_delete=auto_delete,
+        nowait=nowait,
+        arguments=arguments
+    )
+    name, message_count, consumer_count = ret
+    logger.info("Queue {} - presently {} messages and {} consumers connected".format(
+        name, message_count, consumer_count))
+
+def bind_queue(connection, queue):
+    """binds a queue to the bindings identified in the doc"""
+    bindings = queue.get('bindings')
+    ch = connection.channel(synchronous=True)
+    name = queue.get('queue')
+    for binding in bindings:
+        exchange = binding['exchange']
+        key = binding['routing_key']
+        logger.info("bind {} to {}:{}".format(name, exchange, key))
+        ch.queue.bind(name, exchange, key, nowait=False)
+
+def create_and_bind_queues(connection, queues):
+    for queue in queues:
+        create_queue(connection, queue)
+        bind_queue(connection, queue)
+
+def get_connection_params_from_environment():
+    """returns tuple containing
+    HOSTS, USER, PASSWORD, VHOST
+    """
+    connection_string = os.getenv('RABBITMQ_URL', None)
+    hosts = user = password = vhost = None
+
+    # connection string, all contained
+    if connection_string:
+        cp = urlparse.urlparse(connection_string)
+        hosts_string = cp.hostname
+        hosts = hosts_string.split(",")
+        if cp.port:
+            hosts = [h + ":" + str(cp.port) for h in hosts]
+        user = cp.username
+        password = cp.password
+        vhost = cp.path
+        return (hosts, user, password, vhost)
+
+    # find hosts
+    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
+    if hosts_string:
+        hosts = hosts_string.split(",")
+
+    host = os.getenv('RABBITMQ_HOST', None)
+    if host:
+        hosts = host.split(",")
+        if len(hosts) > 1:
+            raise Exception("invalid rabbitmq connection info: RABBITMQ_HOST requests a single host, received {}".format(host))
+
+    if hosts is None:
+        raise Exception("missing rabbitmq connection info: RABBITMQ_URL, RABBITMQ_HOSTS, or RABBITMQ_HOST is required")
+
+    # find other parameters from env variables
+    user = os.getenv('RABBITMQ_USER', 'guest')
+    password = os.getenv('RABBITMQ_PASS', 'guest')
+    vhost = os.getenv('RABBITMQ_VHOST', '/')
+    return hosts, user, password, vhost
 
 def setup():
     args = get_args_from_cli()
@@ -65,16 +150,7 @@ def setup():
         startup_handler()
         logger.info('Startup handled')
 
-    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
-    if hosts_string is not None:
-        hosts = hosts_string.split(',')
-        logger.info('Hosts are: {0}'.format(hosts))
-        random.shuffle(hosts)
-    else:
-        hosts = [os.getenv('RABBITMQ_HOST', 'localhost')]
-    user = os.getenv('RABBITMQ_USER', 'guest')
-    password = os.getenv('RABBITMQ_PASS', 'guest')
-    vhost = os.getenv('RABBITMQ_VHOST', '/')
+    hosts, user, password, vhost = get_connection_params_from_environment()
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     conn = connect_to_hosts(
         RabbitConnection,
@@ -86,7 +162,13 @@ def setup():
         logger=rabbit_logger
     )
     if conn is None:
+        logger.warning("No connection -- returning")
         return
+
+    queues = config.get('queues')
+    if queues:
+        create_and_bind_queues(conn, queues)
+
     conn._close_cb = create_connection_closed_cb(conn)
 
     # Create message channel
@@ -209,7 +291,7 @@ class AMQPProxy(object):
         self._channel.basic.publish(msg, exchange, routing_key)
 
     def _error_if_already_terminated(self):
-        if self._terminal_state == True:
+        if self._terminal_state:
             raise Exception('Already responded to message!')
         else:
             self._terminal_state = True
@@ -225,8 +307,8 @@ def message_pump_greenthread(connection):
 
             # Yield to other greenlets so they don't starve
             gevent.sleep()
-    except Exception as exc:
-        logger.exception(exc)
+    except Exception:
+        logger.exception("error in message pump thread")
         exit_code = 1
     finally:
         logging.debug('Leaving message pump')
