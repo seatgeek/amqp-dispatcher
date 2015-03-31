@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import argparse
 import importlib
 import logging
 import os
-import random
 import socket
 import sys
 import urlparse
@@ -15,27 +14,36 @@ from yaml import safe_load as load
 import gevent
 import gevent.queue
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+format = '%(asctime)s - %(levelname)s - %(message)s'
+logging.basicConfig(level=logging.DEBUG, format=format)
 logger = logging.getLogger('amqp-dispatcher')
+
 
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
-    parser.add_argument('--config', metavar='config', type=str,  default='config.yml', help='path to the config file')
+    parser.add_argument('--config',
+                        metavar='config',
+                        type=str,
+                        default='config.yml',
+                        help='path to the config file')
 
     args = parser.parse_args()
     return args
 
+
 def channel_closed_cb(ch):
-    logger.info("AMQP channel closed; close-info: %s" % (
-      ch.close_info,))
+    logger.info("AMQP channel closed; close-info: %s" % (ch.close_info,))
     ch = None
     return
+
 
 def create_connection_closed_cb(connection):
     def connection_closed_cb():
         logger.info("AMQP broker connection closed; close-info: %s" % (
-          connection.close_info,))
+            connection.close_info,
+        ))
     return connection_closed_cb
+
 
 def connect_to_hosts(connector, hosts, **kwargs):
     for host in hosts:
@@ -46,6 +54,7 @@ def connect_to_hosts(connector, hosts, **kwargs):
         except socket.error:
             logger.info('Error connecting to {0}'.format(host))
     logger.error('Could not connect to any hosts')
+
 
 def create_queue(connection, queue):
     """creates a queue synchronously"""
@@ -59,16 +68,18 @@ def create_queue(connection, queue):
     nowait = False
 
     arguments = {}
-    if queue.get('x_dead_letter_exchange'):
-        arguments['x-dead-letter-exchange'] = queue.get('x_dead_letter_exchange')
-    if queue.get('x_dead_letter_routing_key'):
-        arguments['x-dead-letter-routing-key'] = queue.get('x_dead_letter_routing_key')
-    if queue.get('x_max_length'):
-        arguments['x-max-length'] = queue.get('x_max_length')
-    if queue.get('x_expires'):
-        arguments['x-expires'] = queue.get('x_expires')
-    if queue.get('x_message_ttl'):
-        arguments['x-message-ttl'] = queue.get('x_message_ttl')
+    queue_args = [
+        'x_dead_letter_exchange',
+        'x_dead_letter_routing_key',
+        'x_max_length',
+        'x_expires',
+        'x_message_ttl',
+    ]
+
+    for queue_arg in queue_args:
+        key = queue_arg.replace('_', '-')
+        if queue.get(queue_arg):
+            arguments[key] = queue.get(queue_arg)
 
     ch = connection.channel(synchronous=True)
     ret = ch.queue.declare(
@@ -81,8 +92,9 @@ def create_queue(connection, queue):
         arguments=arguments
     )
     name, message_count, consumer_count = ret
-    logger.info("Queue {} - presently {} messages and {} consumers connected".format(
-        name, message_count, consumer_count))
+    log_message = "Queue {} - presently {} messages and {} consumers connected"
+    logger.info(log_message.format(name, message_count, consumer_count))
+
 
 def bind_queue(connection, queue):
     """binds a queue to the bindings identified in the doc"""
@@ -95,10 +107,12 @@ def bind_queue(connection, queue):
         logger.info("bind {} to {}:{}".format(name, exchange, key))
         ch.queue.bind(name, exchange, key, nowait=False)
 
+
 def create_and_bind_queues(connection, queues):
     for queue in queues:
         create_queue(connection, queue)
         bind_queue(connection, queue)
+
 
 def get_connection_params_from_environment():
     """returns tuple containing
@@ -138,6 +152,7 @@ def get_connection_params_from_environment():
     password = os.getenv('RABBITMQ_PASS', 'guest')
     vhost = os.getenv('RABBITMQ_VHOST', '/')
     return hosts, user, password, vhost
+
 
 def setup():
     args = get_args_from_cli()
@@ -202,12 +217,15 @@ def setup():
 
     return message_pump_greenlet
 
+
 def load_module(module_name):
     return importlib.import_module(module_name)
+
 
 def load_consumer(consumer_str):
     logger.debug('Loading consumer {0}'.format(consumer_str))
     return load_module_object(consumer_str)
+
 
 def load_module_object(module_object_str):
     module_name, obj_name = module_object_str.split(':')
@@ -225,7 +243,9 @@ class ConsumerPool(object):
             self._create()
 
     def _create(self):
-        logger.debug('Creating consumer instance: {0}'.format(self._klass.__name__))
+        logger.debug('Creating consumer instance: {0}'.format(
+            self._klass.__name__
+        ))
         self._pool.put(self._klass())
 
     def handle(self, msg):
@@ -247,6 +267,7 @@ class ConsumerPool(object):
                     consumer.shutdown,
                     failed_greenlet.exception
                 )
+
                 def create_wrapper(*args):
                     self._create()
                 shutdown_greenlet.link(create_wrapper)
@@ -257,6 +278,7 @@ class ConsumerPool(object):
             greenlet.link_exception(recreate)
             greenlet.start()
         self._gm(func).start()
+
 
 class AMQPProxy(object):
 
@@ -312,6 +334,7 @@ def message_pump_greenthread(connection):
     finally:
         logging.debug('Leaving message pump')
     return exit_code
+
 
 def main():
     greenlet = setup()

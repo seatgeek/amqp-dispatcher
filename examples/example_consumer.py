@@ -6,6 +6,7 @@ import gevent
 
 logger = logging.getLogger(__name__)
 
+
 class Consumer(object):
 
     def __init__(self):
