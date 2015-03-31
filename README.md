@@ -5,12 +5,10 @@ A daemon to run AMQP consumers
 
 ## Running
 
-    RABBITMQ_HOST=rabbitmq.example.com amqp-dispatcher --config amqp-dispatcher-config.yml
+    amqp-dispatcher --config amqp-dispatcher-config.yml
 
-The environment variable `RABBITMQ\_HOSTS` can also be used which will cause
-attempt to connect to a host in a random order. The list should be comma separated.
-
-    RABBITMQ_HOSTS=rabbitmq1.example.com,rabbitmq2.example.com
+The environment variable `RABBITMQ\_URL` can also be used which will cause
+attempt to connect to the defined data source name. Hosts are separated via commas, and they are connected to in random order.
 
 ## Consumers
 
@@ -64,12 +62,7 @@ YAML file for worker configuration.
 
 ### Environment Variables
 
-- `RABBITMQ_URL`: Connection string of the form `amqp://USER:PASS@HOST:PORT/VHOST`, `RABBITMQ_URL` is present, all other environment variables are ignored
-- `RABBITMQ_HOSTS` - Comma separated list of hosts to connect to
-- `RABBITMQ_HOST`  - Host to connect to
-- `RABBITMQ_USER`  - Username to connect with (default is `guest`)
-- `RABBITMQ_PASS`  - Password to connect with (default is `guest`)
-- `RABBITMQ_VHOST` - Virtual host to use (default is `/`)
+- `RABBITMQ_URL`: Connection string of the form `amqp://USER:PASS@HOST:PORT/VHOST`
 
 ### Startup Configuration
 
