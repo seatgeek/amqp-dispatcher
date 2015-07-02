@@ -120,16 +120,17 @@ def parse_url():
     """
     rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost/')
     hosts = user = password = vhost = None
+    port = 5672
 
     cp = urlparse.urlparse(rabbitmq_url)
     hosts_string = cp.hostname
     hosts = hosts_string.split(",")
     if cp.port:
-        hosts = [h + ":" + str(cp.port) for h in hosts]
+        port = int(cp.port)
     user = cp.username
     password = cp.password
     vhost = cp.path
-    return (hosts, user, password, vhost)
+    return (hosts, user, password, vhost, port)
 
 
 def setup():
@@ -142,11 +143,12 @@ def setup():
         startup_handler()
         logger.info('Startup handled')
 
-    hosts, user, password, vhost = parse_url()
+    hosts, user, password, vhost, port = parse_url()
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     conn = connect_to_hosts(
         RabbitConnection,
         hosts,
+        port=port,
         transport='gevent',
         user=user,
         password=password,
