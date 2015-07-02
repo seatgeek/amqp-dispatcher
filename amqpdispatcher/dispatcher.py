@@ -14,10 +14,13 @@ from yaml import safe_load as load
 import gevent
 import gevent.queue
 
-format = "[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
-datefmt = "%Y-%m-%d %H:%M:%S"
+if os.getenv('LOGGING_FILE_CONFIG'):
+    logging.config.fileConfig(os.getenv('LOGGING_FILE_CONFIG'))
+else:
+    format = "[%(asctime)s] %(name)s - %(levelname)s - %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    logging.basicConfig(level=logging.DEBUG, format=format, datefmt=datefmt)
 
-logging.basicConfig(level=logging.DEBUG, format=format, datefmt=datefmt)
 logger = logging.getLogger('amqp-dispatcher')
 
 
