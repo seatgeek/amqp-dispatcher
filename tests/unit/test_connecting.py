@@ -7,7 +7,7 @@ import os
 
 from amqpdispatcher.dispatcher import connect_to_hosts
 from amqpdispatcher.dispatcher import RabbitConnection
-from amqpdispatcher.dispatcher import get_connection_params_from_environment
+from amqpdispatcher.dispatcher import parse_url
 
 
 class TestConnectingToHosts(TestCase):
@@ -47,27 +47,29 @@ class TestConnectionParams(TestCase):
         rabbitmq_url = "amqp://guest:guest@test.foo.com/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
+            hosts, user, password, vhost, port = parse_url()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
             self.assertEqual(hosts, ["test.foo.com"])
+            self.assertEqual(port, 5672)
 
     def test_connection_string_url_single_host_with_port(self):
         rabbitmq_url = "amqp://guest:guest@test.foo.com:5672/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
+            hosts, user, password, vhost, port = parse_url()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
-            self.assertEqual(hosts, ["test.foo.com:5672"])
+            self.assertEqual(hosts, ["test.foo.com"])
+            self.assertEqual(port, 5672)
 
     def test_connection_string_url_multiple_host(self):
         rabbitmq_url = "amqp://guest:guest@server1.foo.com,server2.foo.com/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
+            hosts, user, password, vhost, port = parse_url()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -75,35 +77,13 @@ class TestConnectionParams(TestCase):
                 "server1.foo.com",
                 "server2.foo.com"
             ])
+            self.assertEqual(port, 5672)
 
     def test_connection_string_url_multiple_host_with_port(self):
         rabbitmq_url = "amqp://guest:guest@server1.foo.com,server2.foo.com:5672/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
-            self.assertEqual(user, "guest")
-            self.assertEqual(password, "guest")
-            self.assertEqual(vhost, "/")
-            self.assertEqual(sorted(hosts), [
-                "server1.foo.com:5672",
-                "server2.foo.com:5672"
-            ])
-
-    def test_connection_string_url_bad_param(self):
-        rabbitmq_url = "amqp://guest:guest@server1.foo.com,server2.foo.com/"
-        f = env_mocker({"RABBITMQ_URL2": rabbitmq_url})
-        with patch.object(os, 'getenv', new=f):
-            self.assertRaises(Exception, get_connection_params_from_environment)
-
-    def test_connection_string_split_params(self):
-        f = env_mocker({
-            "RABBITMQ_HOSTS": "server1.foo.com,server2.foo.com",
-            "RABBITMQ_USER": "guest",
-            "RABBITMQ_PASS": "guest",
-            "RABBITMQ_VHOST": "/",
-        })
-        with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
+            hosts, user, password, vhost, port = parse_url()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -111,42 +91,4 @@ class TestConnectionParams(TestCase):
                 "server1.foo.com",
                 "server2.foo.com"
             ])
-
-    def test_connection_string_split_params_host(self):
-        f = env_mocker({
-            "RABBITMQ_HOST": "server1.foo.com",
-            "RABBITMQ_USER": "guest",
-            "RABBITMQ_PASS": "guest",
-            "RABBITMQ_VHOST": "/",
-        })
-        with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
-            self.assertEqual(user, "guest")
-            self.assertEqual(password, "guest")
-            self.assertEqual(vhost, "/")
-            self.assertEqual(sorted(hosts), ["server1.foo.com"])
-
-    def test_connection_string_split_params_host_port(self):
-        f = env_mocker({
-            "RABBITMQ_HOST": "server1.foo.com:15672",
-            "RABBITMQ_USER": "guest",
-            "RABBITMQ_PASS": "guest",
-            "RABBITMQ_VHOST": "/",
-        })
-        with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost = get_connection_params_from_environment()
-            self.assertEqual(user, "guest")
-            self.assertEqual(password, "guest")
-            self.assertEqual(vhost, "/")
-            self.assertEqual(sorted(hosts), ["server1.foo.com:15672"])
-
-    def test_connection_string_split_params_host_invalid_comma(self):
-        f = env_mocker({
-            "RABBITMQ_HOST": "server1.foo.com,server2.foo.com",
-            "RABBITMQ_USER": "guest",
-            "RABBITMQ_PASS": "guest",
-            "RABBITMQ_VHOST": "/",
-        })
-
-        with patch.object(os, 'getenv', new=f):
-            self.assertRaises(Exception, get_connection_params_from_environment)
+            self.assertEqual(port, 5672)

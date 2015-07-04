@@ -114,44 +114,23 @@ def create_and_bind_queues(connection, queues):
         bind_queue(connection, queue)
 
 
-def get_connection_params_from_environment():
+def parse_url():
     """returns tuple containing
     HOSTS, USER, PASSWORD, VHOST
     """
-    connection_string = os.getenv('RABBITMQ_URL', None)
+    rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost/')
     hosts = user = password = vhost = None
+    port = 5672
 
-    # connection string, all contained
-    if connection_string:
-        cp = urlparse.urlparse(connection_string)
-        hosts_string = cp.hostname
-        hosts = hosts_string.split(",")
-        if cp.port:
-            hosts = [h + ":" + str(cp.port) for h in hosts]
-        user = cp.username
-        password = cp.password
-        vhost = cp.path
-        return (hosts, user, password, vhost)
-
-    # find hosts
-    hosts_string = os.getenv('RABBITMQ_HOSTS', None)
-    if hosts_string:
-        hosts = hosts_string.split(",")
-
-    host = os.getenv('RABBITMQ_HOST', None)
-    if host:
-        hosts = host.split(",")
-        if len(hosts) > 1:
-            raise Exception("invalid rabbitmq connection info: RABBITMQ_HOST requests a single host, received {}".format(host))
-
-    if hosts is None:
-        raise Exception("missing rabbitmq connection info: RABBITMQ_URL, RABBITMQ_HOSTS, or RABBITMQ_HOST is required")
-
-    # find other parameters from env variables
-    user = os.getenv('RABBITMQ_USER', 'guest')
-    password = os.getenv('RABBITMQ_PASS', 'guest')
-    vhost = os.getenv('RABBITMQ_VHOST', '/')
-    return hosts, user, password, vhost
+    cp = urlparse.urlparse(rabbitmq_url)
+    hosts_string = cp.hostname
+    hosts = hosts_string.split(",")
+    if cp.port:
+        port = int(cp.port)
+    user = cp.username
+    password = cp.password
+    vhost = cp.path
+    return (hosts, user, password, vhost, port)
 
 
 def setup():
@@ -164,11 +143,12 @@ def setup():
         startup_handler()
         logger.info('Startup handled')
 
-    hosts, user, password, vhost = get_connection_params_from_environment()
+    hosts, user, password, vhost, port = parse_url()
     rabbit_logger = logging.getLogger('amqp-dispatcher.haigha')
     conn = connect_to_hosts(
         RabbitConnection,
         hosts,
+        port=port,
         transport='gevent',
         user=user,
         password=password,
