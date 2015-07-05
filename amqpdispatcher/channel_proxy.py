@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
+from haigha.message import Message
+
+
+def proxy_channel(channel):
+    klass = '{0}.{1}'.format(channel.__module__, channel.__class__.__name__)
+    if klass == 'haigha.channel.Channel':
+        return HaighaChannelProxy(channel)
+    return channel
+
+
+class ChannelProxy(object):
+    def __init__(self, channel):
+        self._channel = channel
+
+    def __getattr__(self, method_name):
+        method = getattr(self._channel, method_name, None)
+        if method:
+            return method
+        raise AttributeError(method_name)
+
+
+class HaighaChannelProxy(ChannelProxy):
+    def basic_ack(self, delivery_tag=0, multiple=False):
+        return self._channel.basic.ack(delivery_tag=delivery_tag,
+                                       multiple=multiple)
+
+    def basic_nack(self, delivery_tag=None, multiple=False, requeue=True):
+        return self._channel.basic.nack(delivery_tag=delivery_tag,
+                                        requeue=requeue)
+
+    def basic_publish(self, exchange, routing_key, body,
+                      properties=None, mandatory=False, immediate=False,
+                      ticket=None):
+        msg = Message(body, properties)
+        return self._channel.basic.publish(msg,
+                                           exchange=exchange,
+                                           routing_key=routing_key,
+                                           mandatory=mandatory,
+                                           immediate=immediate,
+                                           ticket=None)
+
+    def basic_reject(self, delivery_tag=None, requeue=True):
+        return self._channel.basic.reject(delivery_tag=delivery_tag,
+                                          requeue=requeue)
+
+    def basic_qos(self, prefetch_size=0, prefetch_count=0, all_channels=False):
+        return self._channel.basic.qos(prefetch_size=prefetch_size,
+                                       prefetch_count=prefetch_count,
+                                       is_global=all_channels)
+
+    def basic_consume(self,
+                      consumer_callback,
+                      queue='',
+                      no_ack=False,
+                      exclusive=False,
+                      consumer_tag=None,
+                      arguments=None):
+        if arguments is None:
+            arguments = {}
+
+        no_local = arguments.get('no_local', False)
+        nowait = arguments.get('nowait', True)
+        ticket = arguments.get('ticket', None)
+        cb = arguments.get('cb', None)
+        if consumer_tag is None:
+            consumer_tag = ''
+        return self._channel.basic.consume(consumer=consumer_callback,
+                                           queue=queue,
+                                           no_ack=no_ack,
+                                           exclusive=exclusive,
+                                           consumer_tag=consumer_tag,
+                                           no_local=no_local,
+                                           nowait=nowait,
+                                           ticket=ticket,
+                                           cb=cb)
