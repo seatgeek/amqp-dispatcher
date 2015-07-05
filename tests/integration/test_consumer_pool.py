@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 """Test with gevent that it runs the consumer as expected"""
 from unittest import TestCase
 
