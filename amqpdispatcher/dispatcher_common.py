@@ -46,7 +46,7 @@ def create_queue(connection, queue):
     """creates a queue synchronously"""
     logger = logging.getLogger('amqp-dispatcher')
     name = queue['queue']
-    logger.info("Create queue {}".format(name))
+    logger.info("Create queue {0}".format(name))
     durable = bool(queue.get('durable', True))
     auto_delete = bool(queue.get('auto_delete', False))
     exclusive = bool(queue.get('exclusive', False))
@@ -81,14 +81,14 @@ def create_queue(connection, queue):
         arguments=arguments
     )
     name, message_count, consumer_count = ret
-    log_message = "Queue {} - presently {} messages and {} consumers connected"
+    log_message = "Queue {0} - {1} messages and {1} consumers connected"
     logger.info(log_message.format(name, message_count, consumer_count))
 
 
 def bind_queue(connection, queue):
     """binds a queue to the bindings identified in the doc"""
     logger = logging.getLogger('amqp-dispatcher')
-    logger.debug("Binding queue {}".format(queue))
+    logger.debug("Binding queue {0}".format(queue))
     bindings = queue.get('bindings')
     connection = proxy_connection(connection)
     ch = connection.channel(synchronous=True)
@@ -97,7 +97,7 @@ def bind_queue(connection, queue):
     for binding in bindings:
         exchange = binding['exchange']
         key = binding['routing_key']
-        logger.info("bind {} to {}:{}".format(name, exchange, key))
+        logger.info("bind {0} to {1}:{2}".format(name, exchange, key))
         ch.queue_bind(name, exchange, key, nowait=False)
 
 
