@@ -6,7 +6,7 @@ import os
 from mock import patch
 from unittest import TestCase
 
-from amqpdispatcher.dispatcher import parse_url
+from amqpdispatcher.dispatcher_haigha import parse_url
 
 
 def env_mocker(data):
