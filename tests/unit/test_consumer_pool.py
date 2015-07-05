@@ -4,7 +4,7 @@ from mock import MagicMock, call
 from haigha.channel import Channel
 import gevent
 
-from amqpdispatcher.dispatcher import ConsumerPool
+from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 class TestConsumerPool(TestCase):

@@ -5,7 +5,7 @@ from gevent.event import AsyncResult
 from mock import MagicMock
 import gevent
 
-from amqpdispatcher.dispatcher import ConsumerPool
+from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 def create_working_consumer():
