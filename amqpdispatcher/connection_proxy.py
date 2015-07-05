@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 
-def wrap_connection(conn):
+def proxy_connection(conn):
     klass = '{0}.{1}'.format(conn.__module__, conn.__class__.__name__)
     if klass == 'haigha.connections.rabbit_connection.RabbitConnection':
         return HaighaConnectionProxy(conn)

@@ -76,3 +76,34 @@ class HaighaChannelProxy(ChannelProxy):
                                            nowait=nowait,
                                            ticket=ticket,
                                            cb=cb)
+
+    def queue_declare(self, callback=None, queue='', passive=False,
+                      durable=False, exclusive=False, auto_delete=False,
+                      nowait=False, arguments=None, ticket=None):
+        if arguments is None:
+            arguments = {}
+
+        return self._channel.queue.declare(queue=queue,
+                                           passive=passive,
+                                           durable=durable,
+                                           exclusive=exclusive,
+                                           auto_delete=auto_delete,
+                                           nowait=nowait,
+                                           arguments=arguments,
+                                           ticket=ticket,
+                                           cb=callback)
+
+    def queue_bind(self, queue, exchange, routing_key=None, nowait=False,
+                   arguments=None, ticket=None, callback=None):
+        if routing_key is None:
+            routing_key = ''
+        if arguments is None:
+            arguments = {}
+
+        return self._channel.queue.bind(queue,
+                                        exchange,
+                                        routing_key=routing_key,
+                                        nowait=nowait,
+                                        arguments=arguments,
+                                        ticket=ticket,
+                                        cb=callback)

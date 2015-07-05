@@ -7,9 +7,11 @@ import importlib
 import logging
 import os
 import urlparse
+import yaml
 
-from amqpdispatcher.channel_proxy import wrap_channel
-from amqpdispatcher.connection_proxy import wrap_connection
+from amqpdispatcher.channel_proxy import proxy_channel
+from amqpdispatcher.connection_proxy import proxy_connection
+from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 def get_args_from_cli():
@@ -66,9 +68,9 @@ def create_queue(connection, queue):
         if queue.get(queue_arg):
             arguments[key] = queue.get(queue_arg)
 
-    connection = wrap_connection(connection)
+    connection = proxy_connection(connection)
     ch = connection.channel(synchronous=True)
-    ch = wrap_channel(ch)
+    ch = proxy_channel(ch)
     ret = ch.queue_declare(
         queue=name,
         passive=passive,
@@ -88,9 +90,9 @@ def bind_queue(connection, queue):
     logger = logging.getLogger('amqp-dispatcher')
     logger.debug("Binding queue {}".format(queue))
     bindings = queue.get('bindings')
-    connection = wrap_connection(connection)
+    connection = proxy_connection(connection)
     ch = connection.channel(synchronous=True)
-    ch = wrap_channel(ch)
+    ch = proxy_channel(ch)
     name = queue.get('queue')
     for binding in bindings:
         exchange = binding['exchange']
@@ -158,3 +160,74 @@ def message_pump_greenthread(connection):
     finally:
         logger.debug('Leaving message pump')
     return exit_code
+
+
+def setup(logger_name, connector, connect_to_hosts):
+    logger = logging.getLogger('amqp-dispatcher')
+
+    args = get_args_from_cli()
+    config = yaml.safe_load(open(args.config).read())
+
+    startup_handler_str = config.get('startup_handler')
+    if startup_handler_str is not None:
+        startup_handler = load_module_object(startup_handler_str)
+        startup_handler()
+        logger.info('Startup handled')
+
+    hosts, user, password, vhost, port = parse_url()
+    rabbit_logger = logging.getLogger(logger_name)
+    rabbit_logger.setLevel(logging.INFO)
+    conn = connect_to_hosts(
+        connector,
+        hosts,
+        port=port,
+        transport='gevent',
+        user=user,
+        password=password,
+        vhost=vhost,
+        logger=rabbit_logger,
+    )
+    if conn is None:
+        logger.warning("No connection -- returning")
+        return
+
+    queues = config.get('queues')
+    if queues:
+        create_and_bind_queues(conn, queues)
+
+    conn = proxy_connection(conn)
+    conn.add_on_close_callback(create_connection_closed_cb(conn))
+
+    # Create message channel
+    channel = conn.channel()
+    channel = proxy_channel(channel)
+    channel.add_close_listener(channel_closed_cb)
+
+    for consumer in config.get('consumers', []):
+        queue_name = consumer['queue']
+        prefetch_count = consumer.get('prefetch_count', 1)
+        consumer_str = consumer.get('consumer')
+        consumer_count = consumer.get('consumer_count', 1)
+
+        consumer_klass = load_consumer(consumer_str)
+        consume_channel = conn.channel()
+        consume_channel = proxy_channel(consume_channel)
+        consume_channel.basic_qos(prefetch_count=prefetch_count)
+        pool = ConsumerPool(
+            consume_channel,
+            consumer_klass,
+            gevent.Greenlet,
+            consumer_count
+        )
+
+        consume_channel.basic_consume(
+            consumer_callback=pool.handle,
+            queue=queue_name,
+            no_ack=False,
+        )
+        gevent.sleep()
+
+    message_pump_greenlet = gevent.Greenlet(
+        message_pump_greenthread, conn)
+
+    return message_pump_greenlet
