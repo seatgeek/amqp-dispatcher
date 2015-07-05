@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 """Test with gevent that it runs the consumer as expected"""
 from unittest import TestCase
 
@@ -5,7 +8,7 @@ from gevent.event import AsyncResult
 from mock import MagicMock
 import gevent
 
-from amqpdispatcher.dispatcher import ConsumerPool
+from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 def create_working_consumer():

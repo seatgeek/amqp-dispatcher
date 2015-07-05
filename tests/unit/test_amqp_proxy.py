@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 from itertools import permutations
 from unittest import TestCase
 
 from mock import MagicMock
 
-from amqpdispatcher.dispatcher import AMQPProxy
+from amqpdispatcher.amqp_proxy import AMQPProxy
 
 
 class TestAmqpProxy(TestCase):

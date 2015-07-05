@@ -1,10 +1,13 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+
 from unittest import TestCase
 
 from mock import MagicMock, call
 from haigha.channel import Channel
 import gevent
 
-from amqpdispatcher.dispatcher import ConsumerPool
+from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 class TestConsumerPool(TestCase):
@@ -17,12 +20,12 @@ class TestConsumerPool(TestCase):
 
     def test_creates_consumer_specific_number_of_times(self):
         i = 3
-        pool = ConsumerPool(
+        ConsumerPool(
             self.channel,
             self.consumer_class,
             self.greenlet_maker,
             i,
         )
-        calls = [call() for i in range(i)]
+        calls = [call() for _ in range(i)]
 
         self.consumer_class.assert_has_calls(calls)
