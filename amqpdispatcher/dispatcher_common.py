@@ -8,6 +8,9 @@ import logging
 import os
 import urlparse
 
+from amqpdispatcher.channel_proxy import wrap_channel
+from amqpdispatcher.connection_proxy import wrap_connection
+
 
 def get_args_from_cli():
     parser = argparse.ArgumentParser(description='Run Graphite Pager')
@@ -63,8 +66,10 @@ def create_queue(connection, queue):
         if queue.get(queue_arg):
             arguments[key] = queue.get(queue_arg)
 
+    connection = wrap_connection(connection)
     ch = connection.channel(synchronous=True)
-    ret = ch.queue.declare(
+    ch = wrap_channel(ch)
+    ret = ch.queue_declare(
         queue=name,
         passive=passive,
         exclusive=exclusive,
@@ -83,13 +88,15 @@ def bind_queue(connection, queue):
     logger = logging.getLogger('amqp-dispatcher')
     logger.debug("Binding queue {}".format(queue))
     bindings = queue.get('bindings')
+    connection = wrap_connection(connection)
     ch = connection.channel(synchronous=True)
+    ch = wrap_channel(ch)
     name = queue.get('queue')
     for binding in bindings:
         exchange = binding['exchange']
         key = binding['routing_key']
         logger.info("bind {} to {}:{}".format(name, exchange, key))
-        ch.queue.bind(name, exchange, key, nowait=False)
+        ch.queue_bind(name, exchange, key, nowait=False)
 
 
 def create_and_bind_queues(connection, queues):
