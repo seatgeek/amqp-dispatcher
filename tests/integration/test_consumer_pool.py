@@ -86,7 +86,7 @@ class TestConsumerPoolHandlingMessage(TestCase):
         result.get(timeout=1)
 
         tag = msg.delivery_info['delivery_tag']
-        channel.basic.reject.assert_called_once_with(tag, requeue=True)
+        channel.basic_reject.assert_called_once_with(tag, requeue=True)
 
     def test_channel_reject_is_not_called_when_erroring_after_ack(self):
         channel = MagicMock(name='channel')
