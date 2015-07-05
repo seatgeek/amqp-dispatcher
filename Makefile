@@ -1,8 +1,10 @@
 #
 # Basic makefile for general targets
 #
+ifndef VIRTUALENV_PATH
+	VIRTUALENV_PATH = venv
+endif
 
-VIRTUALENV_PATH = venv
 VIRTUALENV_BIN = $(VIRTUALENV_PATH)/bin
 EASY_INSTALL = $(VIRTUALENV_BIN)/easy_install
 DEV_ENV = source $(VIRTUALENV_BIN)/activate ;
@@ -72,4 +74,3 @@ osx_requirements:
 .PHONY: virtualenv
 virtualenv:
 	virtualenv --distribute $(VIRTUALENV_PATH)
-
