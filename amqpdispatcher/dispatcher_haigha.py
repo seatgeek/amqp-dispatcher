@@ -119,7 +119,8 @@ def parse_url():
     """returns tuple containing
     HOSTS, USER, PASSWORD, VHOST
     """
-    rabbitmq_url = os.getenv('RABBITMQ_URL', 'amqp://guest:guest@localhost/')
+    rabbitmq_url = os.getenv('RABBITMQ_URL',
+                             'amqp://guest:guest@localhost:5672/')
     hosts = user = password = vhost = None
     port = 5672
 
