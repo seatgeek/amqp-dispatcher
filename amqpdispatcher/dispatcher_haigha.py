@@ -8,9 +8,6 @@ import sys
 from amqpdispatcher.dispatcher_common import setup
 from haigha.connections.rabbit_connection import RabbitConnection
 
-format = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(level=logging.DEBUG, format=format)
-
 
 def connect_to_hosts(connector, hosts, **kwargs):
     logger = logging.getLogger('amqp-dispatcher')

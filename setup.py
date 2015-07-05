@@ -34,7 +34,7 @@ def run_setup():
         ],
         entry_points="""
         [console_scripts]
-            amqp-dispatcher=amqpdispatcher.dispatcher_haigha:main
+            amqp-dispatcher=amqpdispatcher.dispatcher:main
         """,
     )
 
