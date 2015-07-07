@@ -6,6 +6,10 @@ from haigha.message import Message
 
 def proxy_channel(channel):
     klass = '{0}.{1}'.format(channel.__module__, channel.__class__.__name__)
+    if klass == 'pika.adapters.blocking_connection.BlockingChannel':
+        return PikaChannelProxy(channel)
+    if klass == 'pika.channel.Channel':
+        return PikaChannelProxy(channel)
     if klass == 'haigha.channel.Channel':
         return HaighaChannelProxy(channel)
     return channel
@@ -20,6 +24,26 @@ class ChannelProxy(object):
         if method:
             return method
         raise AttributeError(method_name)
+
+
+class PikaChannelProxy(ChannelProxy):
+    def add_close_listener(self, callback):
+        pass
+
+    def queue_declare(self, callback=None, queue='', passive=False,
+                      durable=False, exclusive=False, auto_delete=False,
+                      nowait=False, arguments=None, ticket=None):
+        ret = self._channel.queue_declare(queue=queue,
+                                          passive=passive,
+                                          durable=durable,
+                                          exclusive=exclusive,
+                                          auto_delete=auto_delete,
+                                          nowait=nowait,
+                                          arguments=arguments)
+        name = ret.method.queue
+        message_count = ret.method.message_count
+        consumer_count = ret.method.consumer_count
+        return name, message_count, consumer_count
 
 
 class HaighaChannelProxy(ChannelProxy):
