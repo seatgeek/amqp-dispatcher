@@ -1,4 +1,4 @@
-# AMQP Dispatcher [![Build Status](https://travis-ci.org/philipcristiano/amqp-dispatcher.svg?branch=v0.3.0)](https://travis-ci.org/philipcristiano/amqp-dispatcher)
+# AMQP Dispatcher [![Build Status](https://travis-ci.org/philipcristiano/amqp-dispatcher.svg?branch=master)](https://travis-ci.org/philipcristiano/amqp-dispatcher)
 
 A daemon to run AMQP consumers
 
