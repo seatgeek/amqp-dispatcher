@@ -26,9 +26,13 @@ def get_args_from_cli():
     return args
 
 
-def channel_closed_cb(ch):
+def channel_closed_cb(ch, reply_code=None, reply_text=None):
+    info = '[{0}] {1}'.format(reply_code, reply_text)
+    if reply_text is None:
+        info = ch.close_info
+
     logger = logging.getLogger('amqp-dispatcher')
-    logger.info("AMQP channel closed; close-info: {0}".format(ch.close_info))
+    logger.info("AMQP channel closed; close-info: {0}".format(info))
     ch = None
     return
 
