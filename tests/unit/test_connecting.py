@@ -6,8 +6,8 @@ import socket
 from mock import MagicMock
 from unittest import TestCase
 
-from amqpdispatcher.dispatcher import connect_to_hosts
-from amqpdispatcher.dispatcher import RabbitConnection
+from amqpdispatcher.dispatcher_haigha import connect_to_hosts
+from amqpdispatcher.dispatcher_haigha import RabbitConnection
 
 
 class TestConnectingToHosts(TestCase):
