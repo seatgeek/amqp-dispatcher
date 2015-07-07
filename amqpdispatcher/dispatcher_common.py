@@ -22,6 +22,12 @@ def get_args_from_cli():
                         default='config.yml',
                         help='path to the config file')
 
+    parser.add_argument('--connection',
+                        metavar='connection',
+                        type=str,
+                        default='haigha',
+                        help='type of connection to perform [haigha or pika]')
+
     args = parser.parse_args()
     return args
 

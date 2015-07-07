@@ -3,12 +3,20 @@
 
 import logging
 
+from amqpdispatcher.dispatcher_common import get_args_from_cli
 from amqpdispatcher.dispatcher_haigha import main as main_haigha
+from amqpdispatcher.dispatcher_pika import main as main_pika
 
 
 def main():
     format = '%(asctime)s - %(levelname)s - %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=format)
+
+    args = get_args_from_cli()
+    logger = logging.getLogger('amqp-dispatcher')
+    logger.info('Connection: {0}'.format(args.connection))
+    if args.connection == 'pika':
+        return main_pika()
     return main_haigha()
 
 if __name__ == '__main__':
