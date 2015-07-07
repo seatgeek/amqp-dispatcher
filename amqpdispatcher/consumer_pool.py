@@ -6,6 +6,7 @@ import gevent.queue
 import logging
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from haigha.message import Message
 
 
 class ConsumerPool(object):
@@ -24,7 +25,23 @@ class ConsumerPool(object):
         ))
         self._pool.put(self._klass())
 
-    def handle(self, msg):
+    def _to_dict(self, data_bag):
+        data = {}
+        for key, value in data_bag.__dict__.items():
+            if value is None:
+                continue
+            data[key] = value
+        return data
+
+    def handle(self, msg, *args, **kwargs):
+        # wrap pika responses in a dummy Message class
+        if len(args) == 3:
+            delivery_info = self._to_dict(args[0])
+            properties = self._to_dict(args[1])
+
+            body = args[2]
+            msg = Message(body, delivery_info, **properties)
+
         def func():
             consumer = self._pool.get()
             amqp_proxy = AMQPProxy(self._channel, msg)
