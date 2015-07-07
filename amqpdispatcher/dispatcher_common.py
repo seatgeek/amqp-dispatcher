@@ -26,7 +26,8 @@ def get_args_from_cli():
                         metavar='connection',
                         type=str,
                         default='haigha',
-                        help='type of connection to perform [haigha or pika]')
+                        choices=['haigha', 'pika'],
+                        help='type of connection to use')
 
     args = parser.parse_args()
     return args
