@@ -26,6 +26,7 @@ def run_setup():
             'gevent',
             'haigha',
             'pyyaml',
+            'pika',
         ],
         test_suite='tests',
         long_description=read('README.md'),
