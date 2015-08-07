@@ -31,10 +31,10 @@ git pull -q origin master
 
 echo -e "${YELLOW}--->${COLOR_OFF} Retrieving release versions"
 
-current_version=`cat ${INIT_PACKAGE_NAME}/__init__.py |grep '__version__ ='|sed 's/[^0-9.]//g'`
-major=`echo $current_version | awk '{split($0,a,"."); print a[1]}'`
-minor=`echo $current_version | awk '{split($0,a,"."); print a[2]}'`
-patch=`echo $current_version | awk '{split($0,a,"."); print a[3]}'`
+current_version=$(cat ${INIT_PACKAGE_NAME}/__init__.py |grep '__version__ ='|sed 's/[^0-9.]//g')
+major=$(echo $current_version | awk '{split($0,a,"."); print a[1]}')
+minor=$(echo $current_version | awk '{split($0,a,"."); print a[2]}')
+patch=$(echo $current_version | awk '{split($0,a,"."); print a[3]}')
 
 if [[ "$@" == "major" ]]; then
     major=$(($major + 1));
@@ -55,8 +55,8 @@ echo -e "${YELLOW}--->${COLOR_OFF} Ensuring readme passes lint checks (if this f
 rst-lint README.rst > /dev/null
 
 echo -e "${YELLOW}--->${COLOR_OFF} Creating necessary temp file"
-tempfoo=`basename $0`
-TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || {
+tempfoo=$(basename $0)
+TMPFILE=$(mktemp /tmp/${tempfoo}.XXXXXX) || {
     echo -e "${RED}WARNING: Cannot create temp file using mktemp in /tmp dir ${COLOR_OFF}\n"
     exit 1
 }
@@ -86,7 +86,7 @@ fi
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating CHANGES.rst for new release"
 version_header="$next_version ($(date +%F))"
-dashes=`yes '-'|head -n ${#version_header}|tr -d '\n'`
+dashes=$(yes '-'|head -n ${#version_header}|tr -d '\n')
 gitchangelog |sed "4s/.*/$version_header/"|sed "5s/.*/$dashes/" > $TMPFILE && mv $TMPFILE CHANGES.rst
 
 echo -e "${YELLOW}--->${COLOR_OFF} Adding changed files to git"
