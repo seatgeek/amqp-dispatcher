@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.3.1 (2015-08-07)
+0.3.2 (2015-08-07)
 ------------------
 
 - Fix manifest file. [Jose Diaz-Gonzalez]
