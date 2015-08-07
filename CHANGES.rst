@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.3.5 (2015-08-07)
+------------------
+
+- Minor updates to exit codes. [Jose Diaz-Gonzalez]
+
+- Hack to workaround pipefail... [Jose Diaz-Gonzalez]
+
 0.3.4 (2015-08-07)
 ------------------
 
