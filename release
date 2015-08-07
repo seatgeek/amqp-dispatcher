@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eo pipefail; [[ $RELEASE_TRACE ]] && set -x
 
 PACKAGE_NAME='amqp-dispatcher'
 INIT_PACKAGE_NAME='amqpdispatcher'
