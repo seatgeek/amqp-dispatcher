@@ -86,7 +86,7 @@ fi
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating CHANGES.rst for new release"
 version_header="$next_version ($(date +%F))"
-dashes=$(yes '-'|head -n ${#version_header}|tr -d '\n')
+set +e; dashes=$(yes '-'|head -n ${#version_header}|tr -d '\n') ; set -e
 gitchangelog |sed "4s/.*/$version_header/"|sed "5s/.*/$dashes/" > $TMPFILE && mv $TMPFILE CHANGES.rst
 
 echo -e "${YELLOW}--->${COLOR_OFF} Adding changed files to git"
