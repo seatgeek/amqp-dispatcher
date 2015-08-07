@@ -86,7 +86,7 @@ dashes=`yes '-'|head -n ${#version_header}|tr -d '\n'`
 gitchangelog |sed "4s/.*/$version_header/"|sed "5s/.*/$dashes/" > $TMPFILE && mv $TMPFILE CHANGES.rst
 
 echo -e "${YELLOW}--->${COLOR_OFF} Adding changed files to git"
-git add CHANGES.rst README.rst ${PACKAGE_NAME}/__init__.py
+git add CHANGES.rst README.rst ${INIT_PACKAGE_NAME}/__init__.py
 if [ -f docs/conf.py ]; then git add docs/conf.py; fi
 
 echo -e "${YELLOW}--->${COLOR_OFF} Creating release"
