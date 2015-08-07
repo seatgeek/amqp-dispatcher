@@ -1,8 +1,0 @@
-
-startup_handler: examples.example_startup:startup
-
-consumers:
-  - consumer: examples.example_consumer:Consumer
-    consumer_count: 2
-    queue: test_queue
-    prefetch_count: 2

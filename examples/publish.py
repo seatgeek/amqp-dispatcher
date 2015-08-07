@@ -7,7 +7,7 @@ connection = Connection(
     user='guest',
     password='guest',
     vhost='/',
-    host='33.33.33.10',
+    host='127.0.0.1',
     heartbeat=None,
     debug=True)
 
