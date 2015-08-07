@@ -93,7 +93,7 @@ This is configured in the config yml with the ``startup_handler`` option.
     startup_handler: amqpdispatcher.example_startup:startup
 
 Queue configuration
-------------------
+-------------------
 
 Queues can be created on the fly by amqp dispatcher, and may bind existing exchanges on the fly as well.
 
@@ -169,7 +169,7 @@ A complete configuration example would look like:
 
 ``prefetch_count`` is the AMQP ``prefetch_count`` when consuming. The
 ``consumer_count`` is the number of instances of your consumer to handle messages
-from that queue.  Connection pools are highly recommended. MySQL will require the 
+from that queue.  Connection pools are highly recommended. MySQL will require the
 `MySQL Connector <http://pypi.python.org/pypi/mysql-connector-python>`_  instead of
 ``mysqldb`` in order for gevent to switch properly.
 
