@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.3.4 (2015-08-07)
+------------------
+
+- Do not use backticks. [Jose Diaz-Gonzalez]
+
+- Lint rst file before continuing. [Jose Diaz-Gonzalez]
+
+- Add support for building python wheels. [Jose Diaz-Gonzalez]
+
+- Ensure the release script fails at the first sign of trouble. [Jose
+  Diaz-Gonzalez]
+
+- Fix readme for pypi. [Jose Diaz-Gonzalez]
+
 0.3.3 (2015-08-07)
 ------------------
 
