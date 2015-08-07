@@ -15,16 +15,18 @@ CYAN="\033[0;36m"     # cyan
 
 if [[ "$@" != "major" ]] && [[ "$@" != "minor" ]] && [[ "$@" != "patch" ]]; then
     echo -e "${RED}WARNING: Invalid release type, must specify 'major', 'minor', or 'patch'${COLOR_OFF}\n"
-    exit
+    exit 1
 fi
 
 echo -e "\n${GREEN}STARTING RELEASE PROCESS${COLOR_OFF}\n"
 
+set +e;
 git status | grep "working directory clean" &> /dev/null
 if [ ! $? -eq 0 ]; then # working directory is NOT clean
     echo -e "${RED}WARNING: You have uncomitted changes, you may have forgotten something${COLOR_OFF}\n"
-    exit
+    exit 1
 fi
+set -e;
 
 echo -e "${YELLOW}--->${COLOR_OFF} Updating local copy"
 git pull -q origin master
