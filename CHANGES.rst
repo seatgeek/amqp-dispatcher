@@ -1,7 +1,12 @@
 Changelog
 =========
 
-0.3.2 (2015-08-07)
+0.3.3 (2015-08-07)
+------------------
+
+- Move examples into single folder. [Jose Diaz-Gonzalez]
+
+0.3.1 (2015-08-07)
 ------------------
 
 - Fix manifest file. [Jose Diaz-Gonzalez]
@@ -15,6 +20,9 @@ Changelog
   Gonzalez]
 
 - Add pika to install_requires. [Jose Diaz-Gonzalez]
+
+v0.3.0 (2015-07-07)
+-------------------
 
 - V0.3.0. [Jose Diaz-Gonzalez]
 
@@ -74,6 +82,9 @@ Changelog
   At the moment, this only normalizes calls to the `haigha.channel.Channel` `basic` commands.
 
 
+v0.2.2 (2015-07-05)
+-------------------
+
 - V0.2.2. [Jose Diaz-Gonzalez]
 
 - Switch to container-based travis. [Jose Diaz-Gonzalez]
@@ -93,6 +104,9 @@ Changelog
   This is a minor change in how the modules work and should not affect any external interfaces
 
 
+v0.2.1 (2015-07-05)
+-------------------
+
 - V0.2.1. [Jose Diaz-Gonzalez]
 
 - Pass in port individually. [Jose Diaz-Gonzalez]
@@ -106,6 +120,9 @@ Changelog
   This commit removes the extra parsing, in an attempt to simplify the codebase. The env var RABBITMQ_URL is sufficient to provide all the configuration necessary for amp-dispatcher.
 
 
+v0.1.1 (2015-03-31)
+-------------------
+
 - V0.1.1. [Jose Diaz-Gonzalez]
 
 - PEP8. [Jose Diaz-Gonzalez]
@@ -113,6 +130,9 @@ Changelog
 - This call is basically a syntax error. [Adam Cohen]
 
 - Fixes locked consumers. [Adam Cohen]
+
+v0.1.0 (2015-03-31)
+-------------------
 
 - Merge conflict. [Adam Cohen]
 
@@ -149,6 +169,9 @@ Changelog
 
 - Fixes locked consumers. [Rick Hanlon II]
 
+v0.0.10 (2014-11-07)
+--------------------
+
 - V0.0.10. [Jose Diaz-Gonzalez]
 
 - Fix import path for RabbitConnection. [Jose Diaz-Gonzalez]
@@ -156,6 +179,9 @@ Changelog
   In haigha 0.7.1, there is a BC break where the RabbitConnection is no longer imported in haigha.connections.__init__.py
 
   https://github.com/agoragames/haigha/commit/d2281ee7369a7231aaa7f9a19220f3af93e3fa49
+
+v0.0.9 (2013-06-10)
+-------------------
 
 - V0.0.9. [Philip Cristiano]
 
@@ -168,9 +194,18 @@ Changelog
 - Travis: Try installing Python version specific reqs. [Philip
   Cristiano]
 
+v0.0.8 (2013-02-17)
+-------------------
+
 - V0.0.8 Fix bug when using RABBITMQ_HOST. [Philip Cristiano]
 
+v0.0.7 (2013-02-17)
+-------------------
+
 - Include version. [Philip Cristiano]
+
+v0.0.6 (2013-02-17)
+-------------------
 
 - V0.0.6. [Philip Cristiano]
 
@@ -193,6 +228,9 @@ Changelog
 - Travis: Install libevent. [Philip Cristiano]
 
 - Travis! [Philip Cristiano]
+
+v0.0.5 (2013-01-31)
+-------------------
 
 - V0.0.5. [Philip Cristiano]
 
@@ -236,6 +274,9 @@ Changelog
 - Global startup handler and use logging instead of prints. [Philip
   Cristiano]
 
+v0.0.4 (2013-01-17)
+-------------------
+
 - V0.0.4. [Philip Cristiano]
 
 - Config: Add consumer_count. [Philip Cristiano]
@@ -245,6 +286,9 @@ Changelog
 - Example: Remove old function. [Philip Cristiano]
 
 - README: some docs. [Philip Cristiano]
+
+v0.0.3 (2013-01-16)
+-------------------
 
 - Use parameters when publishing. [Philip Cristiano]
 
