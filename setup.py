@@ -29,7 +29,7 @@ def run_setup():
             'pika',
         ],
         test_suite='tests',
-        long_description=read('README.md'),
+        long_description=read('README.rst'),
         zip_safe=True,
         classifiers=[
         ],
