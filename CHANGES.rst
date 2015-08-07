@@ -1,0 +1,273 @@
+Changelog
+=========
+
+0.3.1 (2015-08-07)
+------------------
+
+- Fix manifest file. [Jose Diaz-Gonzalez]
+
+- Fix setup.py to point to correct readme file. [Jose Diaz-Gonzalez]
+
+- Add a release script to make releasing versions easier. [Jose Diaz-
+  Gonzalez]
+
+- Add a release script to make releasing versions easier. [Jose Diaz-
+  Gonzalez]
+
+- Add pika to install_requires. [Jose Diaz-Gonzalez]
+
+- V0.3.0. [Jose Diaz-Gonzalez]
+
+- Ensure we verify connection types in the argparser. [Jose Diaz-
+  Gonzalez]
+
+- Peg haigha and pika to tested versions. [Jose Diaz-Gonzalez]
+
+- Add ability to set pika as the backend for amqpdispatcher. [Jose Diaz-
+  Gonzalez]
+
+- Add pika implementation of amqp-dispatcher. [Jose Diaz-Gonzalez]
+
+- Add proxy classes for pika channels and connections. [Jose Diaz-
+  Gonzalez]
+
+- Add pika requirement. [Jose Diaz-Gonzalez]
+
+- Wrap pika responses in a dummy Message class. [Jose Diaz-Gonzalez]
+
+  pika sends the channel as the first argument, with the message being sent in args.
+
+
+- Improve python 2.6 compatibility. [Jose Diaz-Gonzalez]
+
+- Create a basic entry point in dispatcher.py. [Jose Diaz-Gonzalez]
+
+- Use setup() method from dispatcher_common in dispatcher_haigha. [Jose
+  Diaz-Gonzalez]
+
+- Proxy both channels and connections. [Jose Diaz-Gonzalez]
+
+- Extract all common methods from dispatcher_haigha to
+  dispatcher_common. [Jose Diaz-Gonzalez]
+
+  The extracted methods are not tied to haigha and can be reused across multiple backends.
+
+
+- Set a default port in the specified RABBITMQ_URL env var. [Jose Diaz-
+  Gonzalez]
+
+- Move dispatcher.py to dispatcher_haigha.py. [Jose Diaz-Gonzalez]
+
+- Allow overriding the VIRTUALENV_PATH. [Jose Diaz-Gonzalez]
+
+- Add a ConnectionProxy to handle differences between rabbitmq
+  libraries. [Jose Diaz-Gonzalez]
+
+  At the moment, this only adds a method to set the close callback of the Haigha Connection class.
+
+
+- Use a proxied channel inside of AMQPProxy. [Jose Diaz-Gonzalez]
+
+- Add a ChannelProxy to handle differences between rabbitmq libraries.
+  [Jose Diaz-Gonzalez]
+
+  At the moment, this only normalizes calls to the `haigha.channel.Channel` `basic` commands.
+
+
+- V0.2.2. [Jose Diaz-Gonzalez]
+
+- Switch to container-based travis. [Jose Diaz-Gonzalez]
+
+- Separate out test classes. [Jose Diaz-Gonzalez]
+
+  Though they both have to connecting, the tested portions are wholly separate and thus do not need to be kept together
+
+
+- Minor PEP8 fixes. [Jose Diaz-Gonzalez]
+
+- Add shebang and encoding tag. [Jose Diaz-Gonzalez]
+
+- Move AMQPProxy and ConsumerPool into their own modules. [Jose Diaz-
+  Gonzalez]
+
+  This is a minor change in how the modules work and should not affect any external interfaces
+
+
+- V0.2.1. [Jose Diaz-Gonzalez]
+
+- Pass in port individually. [Jose Diaz-Gonzalez]
+
+  Adding it onto the host appears to have issues when non-standard ports are in use
+
+
+- Remove support for env vars other than RABBITMQ_URL. [Jose Diaz-
+  Gonzalez]
+
+  This commit removes the extra parsing, in an attempt to simplify the codebase. The env var RABBITMQ_URL is sufficient to provide all the configuration necessary for amp-dispatcher.
+
+
+- V0.1.1. [Jose Diaz-Gonzalez]
+
+- PEP8. [Jose Diaz-Gonzalez]
+
+- This call is basically a syntax error. [Adam Cohen]
+
+- Fixes locked consumers. [Adam Cohen]
+
+- Merge conflict. [Adam Cohen]
+
+- Use pythonic comparison. [Adam Cohen]
+
+- Add support+tests for RABBITMQ_URL environment variable. [Adam Cohen]
+
+- Create queues defined in the amqp_dispatcher yaml at application start
+  time. [Adam Cohen]
+
+  This allows a client to dynamically specify which queues it should be listening to without necessitating coordination with the RabbitMQ server. It can be useful during testing scenarios or when attempting to bring up/down queue workers in disparate services.
+
+
+- Use the python logger instead of print statements. [Adam Cohen]
+
+- Add env variable instructions to README. [Adam Cohen]
+
+- Will logger.exception will log full exception and stack trace, no need
+  to pass exception. [Adam Cohen]
+
+- Use pythonic comparison. [Adam Cohen]
+
+- Add support for RABBITMQ_URL and tests for parsing environment. [Adam
+  Cohen]
+
+- Add documentation to README. [Adam Cohen]
+
+- Max exclusive parameterizable. [Adam Cohen]
+
+- Create queues defined in the amqp_dispatcher yaml at application start
+  time. [Adam Cohen]
+
+- Log things. [Adam Cohen]
+
+- Fixes locked consumers. [Rick Hanlon II]
+
+- V0.0.10. [Jose Diaz-Gonzalez]
+
+- Fix import path for RabbitConnection. [Jose Diaz-Gonzalez]
+
+  In haigha 0.7.1, there is a BC break where the RabbitConnection is no longer imported in haigha.connections.__init__.py
+
+  https://github.com/agoragames/haigha/commit/d2281ee7369a7231aaa7f9a19220f3af93e3fa49
+
+- V0.0.9. [Philip Cristiano]
+
+- Allow non-default vhost with RABBITMQ_VHOST. [chris erway]
+
+- Reqs: I'll assume you're on 2.7. [Philip Cristiano]
+
+- Travis: Fix path to reqs. [Philip Cristiano]
+
+- Travis: Try installing Python version specific reqs. [Philip
+  Cristiano]
+
+- V0.0.8 Fix bug when using RABBITMQ_HOST. [Philip Cristiano]
+
+- Include version. [Philip Cristiano]
+
+- V0.0.6. [Philip Cristiano]
+
+- Connect to 1 of a random list of hosts. [Philip Cristiano]
+
+- Use proper exit code for connection error. [Philip Cristiano]
+
+- Yaml: safe_load! [Philip Cristiano]
+
+- Dispatcher: Change {} to {0} for py2.6. [Philip Cristiano]
+
+- Logging: Make NullHandler for py2.6. [Philip Cristiano]
+
+- Req: Add importlib for 2.6. [Philip Cristiano]
+
+- Need argparse for 2.6. [Philip Cristiano]
+
+- Req: Remove unused requirements. [Philip Cristiano]
+
+- Travis: Install libevent. [Philip Cristiano]
+
+- Travis! [Philip Cristiano]
+
+- V0.0.5. [Philip Cristiano]
+
+- Config: Include username and password. [Philip Cristiano]
+
+- Test: Don't reject if acked. [Philip Cristiano]
+
+- Test: Make sure reject/requeue is called when an error occurs. [Philip
+  Cristiano]
+
+- Test: Actually call erroring consumer. [Philip Cristiano]
+
+- Test ConsumerPool calls consume and shutdown. [Philip Cristiano]
+
+  Requires gevent in the test, not to bad, needs to be cleaned up though
+
+- Don't use a new class, just use greenlet for now. [Philip Cristiano]
+
+  Less complexity, still trying to make it easier to test consumer pool spawning
+
+- Start process container for gevent. [Philip Cristiano]
+
+- Whitespace fixes. [Philip Cristiano]
+
+- Example startup adds handler to root. [Philip Cristiano]
+
+- Pool: Catch errors from exceptional shutdown. [Philip Cristiano]
+
+- Proxy: Raise error if responding twice. [Philip Cristiano]
+
+- Move module to avoid nose picking it up. [Philip Cristiano]
+
+- Fix example logging. [Philip Cristiano]
+
+- Fix path to examples. [Philip Cristiano]
+
+- Fix startup handling when not defined. [Philip Cristiano]
+
+- Log with logger, not logging. [Philip Cristiano]
+
+- Global startup handler and use logging instead of prints. [Philip
+  Cristiano]
+
+- V0.0.4. [Philip Cristiano]
+
+- Config: Add consumer_count. [Philip Cristiano]
+
+- Requirements: Add forgotten requirements. [Philip Cristiano]
+
+- Example: Remove old function. [Philip Cristiano]
+
+- README: some docs. [Philip Cristiano]
+
+- Use parameters when publishing. [Philip Cristiano]
+
+- Setup v 0.0.2. [Philip Cristiano]
+
+- Suitable to be a daemon. [Philip Cristiano]
+
+- Only need to run this once. [Philip Cristiano]
+
+- Remove unused imports. [Philip Cristiano]
+
+- Run concurrently with prefetch and ack messages. [Philip Cristiano]
+
+- First prototype. [Philip Cristiano]
+
+  Trying to work out how to run multiple greenlets simultaneously
+
+- Make: Add upload target. [Philip Cristiano]
+
+- Make: Fix path to Python. [Philip Cristiano]
+
+- Basic project layout. [Philip Cristiano]
+
+- Initial commit. [philipcristiano]
+
+
