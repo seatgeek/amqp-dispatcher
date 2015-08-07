@@ -13,6 +13,9 @@ YELLOW="\033[0;33m"   # yellow
 MAGENTA="\033[0;35m"  # magenta
 CYAN="\033[0;36m"     # cyan
 
+# ensure wheel is available
+pip install wheel > /dev/null
+
 if [[ "$@" != "major" ]] && [[ "$@" != "minor" ]] && [[ "$@" != "patch" ]]; then
     echo -e "${RED}WARNING: Invalid release type, must specify 'major', 'minor', or 'patch'${COLOR_OFF}\n"
     exit 1
@@ -107,7 +110,6 @@ git push -q origin master && git push -q --tags
 if [[ "$PUBLIC" == "true" ]]; then
     echo -e "${YELLOW}--->${COLOR_OFF} Creating python release"
     cp README.rst README
-    pip install wheel
     python setup.py sdist bdist_wheel upload > /dev/null
     rm README
 fi
