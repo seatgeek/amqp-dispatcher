@@ -51,6 +51,9 @@ next_version="${major}.${minor}.${patch}"
 
 echo -e  "${YELLOW}   >${COLOR_OFF} ${MAGENTA}${current_version}${COLOR_OFF} -> ${MAGENTA}${next_version}${COLOR_OFF}"
 
+echo -e "${YELLOW}--->${COLOR_OFF} Ensuring readme passes lint checks (if this fails, run rst-lint)"
+rst-lint README.rst > /dev/null
+
 echo -e "${YELLOW}--->${COLOR_OFF} Creating necessary temp file"
 tempfoo=`basename $0`
 TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || {
