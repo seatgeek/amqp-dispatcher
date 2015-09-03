@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.3.6 (2015-09-03)
+------------------
+
+- Ensure the rst-lint binary is available. [Jose Diaz-Gonzalez]
+
+- Add test badge to readme. [Jose Diaz-Gonzalez]
+
+- Move wheel checking to the top of the file. [Jose Diaz-Gonzalez]
+
 0.3.5 (2015-08-07)
 ------------------
 
