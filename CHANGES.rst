@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.1 (2015-09-12)
+0.4.2 (2015-09-12)
 ------------------
 
 - Set current values in setup.py. [Jose Diaz-Gonzalez]
