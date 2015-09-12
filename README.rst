@@ -50,7 +50,7 @@ that yourself.
 
 Example consumer:
 
-.. code:: bash
+.. code:: python
 
     class Consumer(object):
 
