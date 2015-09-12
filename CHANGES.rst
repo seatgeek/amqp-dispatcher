@@ -1,7 +1,15 @@
 Changelog
 =========
 
-0.4.2 (2015-09-12)
+0.4.3 (2015-09-12)
+------------------
+
+- Use print instead of logger for error messages. [Jose Diaz-Gonzalez]
+
+  The python logger may be somehow reconfigured by a worker during it's import tests
+
+
+0.4.1 (2015-09-12)
 ------------------
 
 - Set current values in setup.py. [Jose Diaz-Gonzalez]
