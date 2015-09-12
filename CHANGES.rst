@@ -1,7 +1,16 @@
 Changelog
 =========
 
-0.3.7 (2015-09-03)
+0.4.0 (2015-09-12)
+------------------
+
+- Add flag to allow validating config.yml files. [Jose Diaz-Gonzalez]
+
+- Fix syntax highlighting. [Jose Diaz-Gonzalez]
+
+- Add check for gitchangelog. [Jose Diaz-Gonzalez]
+
+0.3.6 (2015-09-03)
 ------------------
 
 - Ensure the rst-lint binary is available. [Jose Diaz-Gonzalez]

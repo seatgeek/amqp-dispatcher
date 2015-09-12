@@ -19,7 +19,7 @@ Using PIP:
 
 From Github::
 
-    pip install git+git://github.com/philipcristiano/amqp-dispatcher.git@0.3.7#egg=beaver
+    pip install git+git://github.com/philipcristiano/amqp-dispatcher.git@0.4.0#egg=beaver
 
 From PyPI::
 
