@@ -29,6 +29,11 @@ def get_args_from_cli():
                         choices=['haigha', 'pika'],
                         help='type of connection to use')
 
+    parser.add_argument('--validate',
+                        dest='validate',
+                        action='store_true',
+                        default=False,
+                        help='validate the config.yml file')
     args = parser.parse_args()
     return args
 

@@ -1,5 +1,5 @@
 ===============
-AMQP Dispatcher 
+AMQP Dispatcher
 ===============
 
 .. image:: https://travis-ci.org/opschops/amqp-dispatcher.svg?branch=master
@@ -78,6 +78,16 @@ Configuration
 
 amqp-dispatcher will read environment variable for connection information and a
 YAML file for worker configuration.
+
+You can validate the yaml file configuration with the following command:
+
+.. code:: bash
+
+    amqp-dispatcher --validate --config amqp-dispatcher-config.yml
+
+This will validate that the ``startup_handler`` and ``consumers`` exist and can be
+imported. Note that if there is any logic contained outside of those functions, said
+logic will be executed.
 
 Environment Variables
 ---------------------
