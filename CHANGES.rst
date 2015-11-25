@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.4.4 (2015-11-25)
+------------------
+
+- Properly handle versions of pika connections where nowait is not
+  implemented. [Jose Diaz-Gonzalez]
+
+  Blocking connections appear to not implement nowait, so we need to sniff out this feature before tacking on a keyword argument.
+
+
+- Fix pip install instructions. [Jose Diaz-Gonzalez]
+
 0.4.3 (2015-09-12)
 ------------------
 
