@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import inspect
+
 from haigha.message import Message
 
 
@@ -33,13 +35,20 @@ class PikaChannelProxy(ChannelProxy):
     def queue_declare(self, callback=None, queue='', passive=False,
                       durable=False, exclusive=False, auto_delete=False,
                       nowait=False, arguments=None, ticket=None):
-        ret = self._channel.queue_declare(queue=queue,
-                                          passive=passive,
-                                          durable=durable,
-                                          exclusive=exclusive,
-                                          auto_delete=auto_delete,
-                                          nowait=nowait,
-                                          arguments=arguments)
+        kwargs = {
+            'queue': queue,
+            'passive': passive,
+            'durable': durable,
+            'exclusive': exclusive,
+            'auto_delete': auto_delete,
+            'arguments': arguments
+        }
+
+        arg_spec = inspect.getargspec(self._channel.queue_declare)
+        if 'nowait' in arg_spec.args:
+            kwargs['nowait'] = nowait
+
+        ret = self._channel.queue_declare(**kwargs)
         name = ret.method.queue
         message_count = ret.method.message_count
         consumer_count = ret.method.consumer_count

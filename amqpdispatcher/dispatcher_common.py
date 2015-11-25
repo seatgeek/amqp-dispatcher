@@ -4,6 +4,7 @@
 import argparse
 import gevent
 import importlib
+import inspect
 import logging
 import os
 import urlparse
@@ -109,12 +110,16 @@ def bind_queue(connection, queue):
     connection = proxy_connection(connection)
     ch = connection.channel(synchronous=True)
     ch = proxy_channel(ch)
+    arg_spec = inspect.getargspec(ch.queue_bind)
     name = queue.get('queue')
     for binding in bindings:
         exchange = binding['exchange']
         key = binding['routing_key']
         logger.info("bind {0} to {1}:{2}".format(name, exchange, key))
-        ch.queue_bind(name, exchange, key, nowait=False)
+        if 'nowait' in arg_spec.args:
+            ch.queue_bind(name, exchange, key, nowait=False)
+        else:
+            ch.queue_bind(name, exchange, key)
 
 
 def create_and_bind_queues(connection, queues):
