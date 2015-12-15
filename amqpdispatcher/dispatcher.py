@@ -13,8 +13,9 @@ def main():
     if os.getenv('LOGGING_FILE_CONFIG'):
         logging.config.fileConfig(os.getenv('LOGGING_FILE_CONFIG'))
     else:
-        logformat = '%(asctime)s - %(levelname)s - %(message)s'
-        logging.basicConfig(level=logging.DEBUG, format=logformat)
+        logformat = "[%(asctime)s] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+        logging.basicConfig(level=logging.DEBUG, format=logformat, datefmt=datefmt)
 
     args = get_args_from_cli()
     if args.validate:
