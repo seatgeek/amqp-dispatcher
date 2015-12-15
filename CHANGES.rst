@@ -1,6 +1,30 @@
 Changelog
 =========
 
+0.5.0 (2015-12-15)
+------------------
+
+- Add a makefile target to run an example runner. [Jose Diaz-Gonzalez]
+
+- Add missing import. [Jose Diaz-Gonzalez]
+
+- Ensure pygments is available. [Jose Diaz-Gonzalez]
+
+- Add more information to the base log format. [Jose Diaz-Gonzalez]
+
+  - Use ISO8601 date format
+  - Add the process id
+  - Ensure we add the name of the logger
+  - Wrap time in brackets
+
+- Add documentation for LOGGING_FILE_CONFIG. [Jose Diaz-Gonzalez]
+
+- Allow configuring logging via file config. [Jose Diaz-Gonzalez]
+
+  Set the LOGGING_FILE_CONFIG env var to specify a logging config file
+
+- Add caching to travis runs. [Jose Diaz-Gonzalez]
+
 0.4.4 (2015-11-25)
 ------------------
 
