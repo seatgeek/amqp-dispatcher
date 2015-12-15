@@ -19,11 +19,11 @@ Using PIP:
 
 From Github::
 
-    pip install git+git://github.com/philipcristiano/amqp-dispatcher.git@0.5.0#egg=amqp-dispatcher
+    pip install git+git://github.com/philipcristiano/amqp-dispatcher.git@0.5.1#egg=amqp-dispatcher
 
 From PyPI::
 
-    pip install amqp-dispatcher==0.5.0
+    pip install amqp-dispatcher==0.5.1
 
 
 Running

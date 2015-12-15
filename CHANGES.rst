@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.1 (2015-12-15)
+------------------
+
+- Fix pip install version. [Jose Diaz-Gonzalez]
+
 0.5.0 (2015-12-15)
 ------------------
 
