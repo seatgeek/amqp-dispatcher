@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import logging
+import os
 
 from amqpdispatcher.dispatcher_common import get_args_from_cli
 from amqpdispatcher.dispatcher_haigha import main as main_haigha
