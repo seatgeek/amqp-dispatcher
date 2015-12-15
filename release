@@ -16,6 +16,9 @@ CYAN="\033[0;36m"     # cyan
 # ensure wheel is available
 pip install wheel > /dev/null
 
+# ensure Pygment is available
+pip install Pygments > /dev/null
+
 command -v gitchangelog >/dev/null 2>&1 || {
     echo -e "${RED}WARNING: Missing gitchangelog binary, please run: pip install gitchangelog==2.2.0${COLOR_OFF}\n"
     exit 1
