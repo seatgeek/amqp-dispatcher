@@ -13,6 +13,10 @@ NOSYD = $(VIRTUALENV_BIN)/nosyd -1
 PIP = $(VIRTUALENV_BIN)/pip
 PYTHON = $(ENV) $(VIRTUALENV_BIN)/python
 
+.PHONY: example
+example:
+	cd examples && PYTHONPATH=. amqp-dispatcher --config amqp-dispatcher-config.yml
+
 .PHONY: test
 test: unit-test integration-test acceptance-test
 

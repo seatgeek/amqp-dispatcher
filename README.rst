@@ -37,6 +37,12 @@ The environment variable ``RABBITMQ_URL`` can also be used which will cause
 attempt to connect to the defined data source name. Hosts are separated
 via commas, and they are connected to in random order.
 
+To see an example run:
+
+.. code:: bash
+
+    make example
+
 Consumers
 ---------
 
@@ -215,8 +221,8 @@ Logging
 -------
 
 Logging is performed on the logger ``amqp-dispatcher``. The RabbitMQ connection
-provided by Haigha will log on ``amqp-dispatcher.haigha``. 
+provided by Haigha will log on ``amqp-dispatcher.haigha``.
 
-You can also configure the logger by using the ``LOGGING_FILE_CONFIG`` 
-environment variable to specify a file config path. This will be used by 
+You can also configure the logger by using the ``LOGGING_FILE_CONFIG``
+environment variable to specify a file config path. This will be used by
 ``logging.config.fileConfig`` before creating the initial logger.
