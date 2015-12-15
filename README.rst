@@ -23,7 +23,7 @@ From Github::
 
 From PyPI::
 
-    pip install amqp-dispatcher==0.4.3
+    pip install amqp-dispatcher==0.5.0
 
 
 Running
