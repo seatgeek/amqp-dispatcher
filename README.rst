@@ -215,4 +215,8 @@ Logging
 -------
 
 Logging is performed on the logger ``amqp-dispatcher``. The RabbitMQ connection
-provided by Haigha will log on ``amqp-dispatcher.haigha``.
+provided by Haigha will log on ``amqp-dispatcher.haigha``. 
+
+You can also configure the logger by using the ``LOGGING_FILE_CONFIG`` 
+environment variable to specify a file config path. This will be used by 
+``logging.config.fileConfig`` before creating the initial logger.
