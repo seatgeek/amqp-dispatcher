@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.0 (2016-02-16)
+------------------
+
+- Respect heartbeat settings from server when using the haigha
+  dispatcher. [Jose Diaz-Gonzalez]
+
 0.5.1 (2015-12-15)
 ------------------
 
