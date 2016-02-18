@@ -145,7 +145,48 @@ def parse_url():
     user = cp.username
     password = cp.password
     vhost = cp.path
-    return (hosts, user, password, vhost, port)
+    heartbeat = parse_heartbeat(cp.query)
+    return (hosts, user, password, vhost, port, heartbeat)
+
+
+def parse_heartbeat(query):
+    logger = logging.getLogger('amqp-dispatcher')
+
+    default_heartbeat = None
+    heartbeat = default_heartbeat
+    if query:
+        qs = urlparse.parse_qs(query)
+        heartbeat = qs.get('heartbeat', default_heartbeat)
+    else:
+        logger.debug('No heartbeat specified, using broker defaults')
+
+    if isinstance(heartbeat, (list, tuple)):
+        if len(heartbeat) == 0:
+            logger.warning('No heartbeat value set, using default')
+            heartbeat = default_heartbeat
+        elif len(heartbeat) == 1:
+            heartbeat = heartbeat[0]
+        else:
+            logger.warning('Multiple heartbeat values set, using broker default: {0}'.format(
+                heartbeat
+            ))
+            heartbeat = default_heartbeat
+
+    if type(heartbeat) == str and heartbeat.lower() == 'none':
+        return None
+
+    if heartbeat is None:
+        return heartbeat
+
+    try:
+        heartbeat = int(heartbeat)
+    except ValueError:
+        logger.warning('Unable to cast heartbeat to int, using broker default: {0}'.format(
+            heartbeat
+        ))
+        heartbeat = default_heartbeat
+
+    return heartbeat
 
 
 def load_module(module_name):
@@ -195,7 +236,7 @@ def setup(logger_name, connector, connect_to_hosts):
         startup_handler()
         logger.info('Startup handled')
 
-    hosts, user, password, vhost, port = parse_url()
+    hosts, user, password, vhost, port, heartbeat = parse_url()
     rabbit_logger = logging.getLogger(logger_name)
     rabbit_logger.setLevel(logging.INFO)
     conn = connect_to_hosts(
@@ -207,6 +248,7 @@ def setup(logger_name, connector, connect_to_hosts):
         password=password,
         vhost=vhost,
         logger=rabbit_logger,
+        heartbeat=heartbeat,
     )
     if conn is None:
         logger.warning("No connection -- returning")

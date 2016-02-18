@@ -11,7 +11,7 @@ from amqpdispatcher.dispatcher_common import setup
 from pika import BlockingConnection as RabbitConnection
 
 
-def connection_params(user, password, host, port, vhost):
+def connection_params(user, password, host, port, vhost, heartbeat):
     netloc = None
     if user and password:
         netloc = '{0}:{1}'.format(user, password)
@@ -25,7 +25,9 @@ def connection_params(user, password, host, port, vhost):
     if port:
         netloc = '{0}:{1}'.format(netloc, port)
 
-    url = urlparse.urlunparse(('amqp', netloc, vhost, '', '', ''))
+    query = 'heartbeat={0}'.format(heartbeat)
+
+    url = urlparse.urlunparse(('amqp', netloc, vhost, '', query, ''))
     params = pika.URLParameters(url)
     params.socket_timeout = 5
     return params
@@ -33,6 +35,7 @@ def connection_params(user, password, host, port, vhost):
 
 def connect_to_hosts(connector, hosts, port, user, password, vhost, **kwargs):
     logger = logging.getLogger('amqp-dispatcher')
+    heartbeat = parse_heartbeat()
 
     for host in hosts:
         logger.info('Trying to connect to host: {0}'.format(host))

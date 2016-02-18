@@ -37,6 +37,11 @@ The environment variable ``RABBITMQ_URL`` can also be used which will cause
 attempt to connect to the defined data source name. Hosts are separated
 via commas, and they are connected to in random order.
 
+Note that you can specify a heartbeat via the ``heartbeat`` querystring value
+on the ``RABBITMQ_URL``. By default, it is set to ``None``, which ensures that
+the client respects the broker specified heartbeat settings. You may wish to
+override this for a particular environment.
+
 To see an example run:
 
 .. code:: bash

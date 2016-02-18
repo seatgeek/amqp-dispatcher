@@ -18,7 +18,7 @@ class TestConnectingToHosts(TestCase):
 
         conn = connect_to_hosts(connector, hosts, arg='arg')
 
-        connector.assert_called_once_with(host='one', heartbeat=0, arg='arg')
+        connector.assert_called_once_with(host='one', arg='arg')
         self.assertEqual(conn, connector())
 
     def test_first_host_fails(self):
@@ -31,5 +31,5 @@ class TestConnectingToHosts(TestCase):
 
         conn = connect_to_hosts(connector, hosts, arg='arg')
 
-        connector.assert_called_with(host='two', heartbeat=0, arg='arg')
+        connector.assert_called_with(host='two', arg='arg')
         self.assertEqual(conn, connector())
