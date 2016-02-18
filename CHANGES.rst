@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.7.0 (2016-02-18)
+------------------
+
+- Respect heartbeat settings from RABBITMQ_URL environment variable.
+  [Jose Diaz-Gonzalez]
+
+  This also reverts 17829d5, which was caused by incorrect documentation of the haigha library. Instead, we properly default to respecting the heartbeat from the client, and also allow users to override this via the RABBITMQ_URL
+
+
 0.6.0 (2016-02-16)
 ------------------
 
