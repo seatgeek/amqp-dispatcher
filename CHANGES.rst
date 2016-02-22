@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.7.1 (2016-02-22)
+------------------
+
+- Fix handling of heartbeat for pika dispatcher. [Jose Diaz-Gonzalez]
+
 0.7.0 (2016-02-18)
 ------------------
 
