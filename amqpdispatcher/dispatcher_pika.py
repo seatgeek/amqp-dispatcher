@@ -33,9 +33,8 @@ def connection_params(user, password, host, port, vhost, heartbeat):
     return params
 
 
-def connect_to_hosts(connector, hosts, port, user, password, vhost, **kwargs):
+def connect_to_hosts(connector, hosts, port, user, password, vhost, heartbeat, **kwargs):
     logger = logging.getLogger('amqp-dispatcher')
-    heartbeat = parse_heartbeat()
 
     for host in hosts:
         logger.info('Trying to connect to host: {0}'.format(host))
@@ -45,7 +44,8 @@ def connect_to_hosts(connector, hosts, port, user, password, vhost, **kwargs):
                 password,
                 host,
                 port,
-                vhost))
+                vhost,
+                heartbeat))
         except socket.error:
             logger.info('Error connecting to {0}'.format(host))
     logger.error('Could not connect to any hosts')
