@@ -145,7 +145,13 @@ def parse_url():
     user = cp.username
     password = cp.password
     vhost = cp.path
-    heartbeat = parse_heartbeat(cp.query)
+    query = cp.query
+
+    # workaround for bug in 12.04
+    if '?' in vhost and query == '':
+        vhost, query = vhost.split('?', 1)
+
+    heartbeat = parse_heartbeat(query)
     return (hosts, user, password, vhost, port, heartbeat)
 
 
