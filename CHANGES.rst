@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.8.0 (2016-02-23)
+------------------
+
+- Workaround for urlparse bug in Python 2.7.3. [Jose Diaz-Gonzalez]
+
+  Apparently the querystring portion isn't respected, causing the vhost to be set to `/?whatever=querystring&is=set`. This breaks heartbeat parsing support on at least Ubuntu 12.04.
+
+
 0.7.1 (2016-02-22)
 ------------------
 
