@@ -7,6 +7,9 @@ import importlib
 import inspect
 import logging
 import os
+import random
+import string
+import socket
 import urlparse
 import yaml
 
@@ -242,6 +245,14 @@ def setup(logger_name, connector, connect_to_hosts):
         startup_handler()
         logger.info('Startup handled')
 
+    random_generator = random.SystemRandom()
+    random_string = ''.join([random_generator.choice(string.ascii_lowercase) for i in xrange(10)])
+    connection_name = '{0}-{1}-{2}'.format(
+        socket.gethostname(),
+        os.getpid(),
+        random_string,
+    )
+
     hosts, user, password, vhost, port, heartbeat = parse_url()
     rabbit_logger = logging.getLogger(logger_name)
     rabbit_logger.setLevel(logging.INFO)
@@ -255,6 +266,9 @@ def setup(logger_name, connector, connect_to_hosts):
         vhost=vhost,
         logger=rabbit_logger,
         heartbeat=heartbeat,
+        client_properties={
+          'connection_name': connection_name,
+        },
     )
     if conn is None:
         logger.warning("No connection -- returning")
