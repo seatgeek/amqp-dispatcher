@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.8.1 (2016-10-31)
+------------------
+
+- Use correct grep call for git 2.0. [Jose Diaz-Gonzalez]
+
+- Feat: add editorconfig. [Jose Diaz-Gonzalez]
+
+- Pull down all keys when updating local copy. [Jose Diaz-Gonzalez]
+
 0.8.0 (2016-02-23)
 ------------------
 
