@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.9.0 (2017-06-04)
+------------------
+
+- Use client_properties to set the management ui `connection_name` [Jose
+  Diaz-Gonzalez]
+
+  The consumer_name is based upon the following bits:
+
+  - the hostname of the server amqp-dispatcher is running on
+  - the process id
+  - a random string made of only ascii characters
+
+  This can be used to more easily figure out where consumers are in your infrastructure.
+
+
 0.8.1 (2016-10-31)
 ------------------
 
