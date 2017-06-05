@@ -1,7 +1,17 @@
 Changelog
 =========
 
-0.9.0 (2017-06-04)
+0.9.1 (2017-06-04)
+------------------
+
+Fix
+~~~
+
+- Install version-level dependencies before global. [Jose Diaz-Gonzalez]
+
+- Pin gevent to 1.1 for python 2.6. [Jose Diaz-Gonzalez]
+
+0.9.0 (2017-06-05)
 ------------------
 
 - Use client_properties to set the management ui `connection_name` [Jose
