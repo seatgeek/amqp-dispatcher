@@ -1,3 +1,5 @@
+amqp-dispatcher.iml
+
 *.py[co]
 
 # Testing

@@ -71,13 +71,17 @@ def is_consumer_valid(consumer):
         if consumer_klass is None:
             print('[{0}] Invalid consumer class'.format(consumer_str))
             is_valid = False
+        else:
+            klass_obj = consumer_klass()
     except ImportError, e:
         print('[{0}] Invalid consumer class: {1}'.format(consumer_str, e))
         is_valid = False
     except AttributeError, e:
         print('[{0}] Invalid consumer class: {1}'.format(consumer_str, e))
         is_valid = False
-
+    except TypeError, e:
+        print('[{0}] Invalid consumer class: {1}'.format(consumer_str, e))
+        is_valid = False
     queue_name = consumer.get('queue', None)
     if not queue_name:
         print('[{0}] No queue name specified'.format(
