@@ -7,7 +7,7 @@ from mock import patch
 from unittest import TestCase
 
 from amqpdispatcher.dispatcher_common import parse_heartbeat
-from amqpdispatcher.dispatcher_common import parse_url
+from amqpdispatcher.dispatcher_common import parse_env
 
 
 def env_mocker(data):
@@ -22,7 +22,7 @@ class TestConnectionParams(TestCase):
         rabbitmq_url = "amqp://guest:guest@test.foo.com/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost, port, heartbeat = parse_url()
+            hosts, user, password, vhost, port, heartbeat = parse_env()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -34,7 +34,7 @@ class TestConnectionParams(TestCase):
         rabbitmq_url = "amqp://guest:guest@test.foo.com:5672/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost, port, heartbeat = parse_url()
+            hosts, user, password, vhost, port, heartbeat = parse_env()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -46,7 +46,7 @@ class TestConnectionParams(TestCase):
         rabbitmq_url = "amqp://guest:guest@server1.foo.com,server2.foo.com/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost, port, heartbeat = parse_url()
+            hosts, user, password, vhost, port, heartbeat = parse_env()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -61,7 +61,7 @@ class TestConnectionParams(TestCase):
         rabbitmq_url = "amqp://guest:guest@server1.foo.com,server2.foo.com:5672/"
         f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
         with patch.object(os, 'getenv', new=f):
-            hosts, user, password, vhost, port, heartbeat = parse_url()
+            hosts, user, password, vhost, port, heartbeat = parse_env()
             self.assertEqual(user, "guest")
             self.assertEqual(password, "guest")
             self.assertEqual(vhost, "/")
@@ -71,6 +71,20 @@ class TestConnectionParams(TestCase):
             ])
             self.assertEqual(port, 5672)
             self.assertEqual(heartbeat, None)
+    
+    def test_connection_string_heartbeat(self):
+        rabbitmq_url = "amqp://guest:guest@test.foo.com/?heartbeat=15"
+        f = env_mocker({"RABBITMQ_URL": rabbitmq_url})
+        with patch.object(os, 'getenv', new=f):
+            hosts, user, password, vhost, port, heartbeat = parse_env()
+            self.assertEqual(heartbeat, 15)
+    
+    def test_connection_string_heartbeat_override(self):
+        rabbitmq_url = "amqp://guest:guest@test.foo.com/?heartbeat=15"
+        f = env_mocker({"RABBITMQ_URL": rabbitmq_url, "RABBITMQ_HEARTBEAT": 25})
+        with patch.object(os, 'getenv', new=f):
+            hosts, user, password, vhost, port, heartbeat = parse_env()
+            self.assertEqual(heartbeat, 25)
 
     def test_parse_heartbeat_without_querysting(self):
         self.assertEqual(None, parse_heartbeat(''))
