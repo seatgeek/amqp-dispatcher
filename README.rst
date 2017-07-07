@@ -42,6 +42,9 @@ on the ``RABBITMQ_URL``. By default, it is set to ``None``, which ensures that
 the client respects the broker specified heartbeat settings. You may wish to
 override this for a particular environment.
 
+Additionally, you can specifically set a heartbeat override via the ``RABBITMQ_HEARTBEAT`` environment variable.
+This will take precedence over the heartbeat set in ``RABBITMQ_URL``.
+
 To see an example run:
 
 .. code:: bash

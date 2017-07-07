@@ -131,9 +131,9 @@ def create_and_bind_queues(connection, queues):
         bind_queue(connection, queue)
 
 
-def parse_url():
+def parse_env():
     """returns tuple containing
-    HOSTS, USER, PASSWORD, VHOST
+    HOSTS, USER, PASSWORD, VHOST, HEARTBEAT
     """
     rabbitmq_url = os.getenv('RABBITMQ_URL',
                              'amqp://guest:guest@localhost:5672/')
@@ -155,6 +155,11 @@ def parse_url():
         vhost, query = vhost.split('?', 1)
 
     heartbeat = parse_heartbeat(query)
+    # Support heartbeat override
+    heartbeat_override = os.getenv('RABBITMQ_HEARTBEAT')
+    if heartbeat_override:
+        heartbeat = int(heartbeat_override)
+
     return (hosts, user, password, vhost, port, heartbeat)
 
 
@@ -252,8 +257,8 @@ def setup(logger_name, connector, connect_to_hosts):
         os.getpid(),
         random_string,
     )
-
-    hosts, user, password, vhost, port, heartbeat = parse_url()
+    
+    hosts, user, password, vhost, port, heartbeat = parse_env()
     rabbit_logger = logging.getLogger(logger_name)
     rabbit_logger.setLevel(logging.INFO)
     conn = connect_to_hosts(
@@ -267,7 +272,7 @@ def setup(logger_name, connector, connect_to_hosts):
         logger=rabbit_logger,
         heartbeat=heartbeat,
         client_properties={
-          'connection_name': connection_name,
+            'connection_name': connection_name,
         },
     )
     if conn is None:
