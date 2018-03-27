@@ -10,8 +10,14 @@ import os
 import random
 import string
 import socket
-import urlparse
 import yaml
+
+try:
+    # python 3
+    from urllib.parse import urlparse
+except ImportError:
+    # python 2
+    from urlparse import urlparse
 
 from amqpdispatcher.channel_proxy import proxy_channel
 from amqpdispatcher.connection_proxy import proxy_connection
