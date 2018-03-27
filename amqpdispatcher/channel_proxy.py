@@ -3,7 +3,7 @@
 
 import inspect
 
-from haigha.message import Message
+from amqpdispatcher.message import Message
 
 
 def proxy_channel(channel):

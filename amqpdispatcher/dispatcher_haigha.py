@@ -5,8 +5,14 @@ import logging
 import socket
 import sys
 
+import six
+
 from amqpdispatcher.dispatcher_common import setup
-from haigha.connections.rabbit_connection import RabbitConnection
+if six.PY2:
+    from haigha.connections.rabbit_connection import RabbitConnection
+else:
+    # haigha is not yet python 3 compatible.
+    RabbitConnection = None
 
 
 def connect_to_hosts(connector, hosts, **kwargs):
@@ -22,6 +28,11 @@ def connect_to_hosts(connector, hosts, **kwargs):
 
 
 def main():
+    if six.PY3:
+        raise NotImplementedError(
+            'haigha currently does not support python 3, please use pika.'
+        )
+
     greenlet = setup('amqp-dispatcher.haigha',
                      RabbitConnection,
                      connect_to_hosts)

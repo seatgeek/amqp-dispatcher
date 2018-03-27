@@ -10,8 +10,10 @@ import os
 import random
 import string
 import socket
-import urlparse
 import yaml
+
+import six
+from six.moves.urllib.parse import parse_qs, urlparse
 
 from amqpdispatcher.channel_proxy import proxy_channel
 from amqpdispatcher.connection_proxy import proxy_connection
@@ -29,7 +31,7 @@ def get_args_from_cli():
     parser.add_argument('--connection',
                         metavar='connection',
                         type=str,
-                        default='haigha',
+                        default=('haigha' if six.PY2 else 'pika'),
                         choices=['haigha', 'pika'],
                         help='type of connection to use')
 
@@ -140,7 +142,7 @@ def parse_env():
     hosts = user = password = vhost = None
     port = 5672
 
-    cp = urlparse.urlparse(rabbitmq_url)
+    cp = urlparse(rabbitmq_url)
     hosts_string = cp.hostname
     hosts = hosts_string.split(",")
     if cp.port:
@@ -169,7 +171,7 @@ def parse_heartbeat(query):
     default_heartbeat = None
     heartbeat = default_heartbeat
     if query:
-        qs = urlparse.parse_qs(query)
+        qs = parse_qs(query)
         heartbeat = qs.get('heartbeat', default_heartbeat)
     else:
         logger.debug('No heartbeat specified, using broker defaults')
@@ -181,9 +183,10 @@ def parse_heartbeat(query):
         elif len(heartbeat) == 1:
             heartbeat = heartbeat[0]
         else:
-            logger.warning('Multiple heartbeat values set, using broker default: {0}'.format(
-                heartbeat
-            ))
+            logger.warning(
+                'Multiple heartbeat values set, using broker default: {0}'
+                .format(heartbeat)
+            )
             heartbeat = default_heartbeat
 
     if type(heartbeat) == str and heartbeat.lower() == 'none':
@@ -195,9 +198,10 @@ def parse_heartbeat(query):
     try:
         heartbeat = int(heartbeat)
     except ValueError:
-        logger.warning('Unable to cast heartbeat to int, using broker default: {0}'.format(
-            heartbeat
-        ))
+        logger.warning(
+            'Unable to cast heartbeat to int, using broker default: {0}'
+            .format(heartbeat)
+        )
         heartbeat = default_heartbeat
 
     return heartbeat
@@ -251,13 +255,15 @@ def setup(logger_name, connector, connect_to_hosts):
         logger.info('Startup handled')
 
     random_generator = random.SystemRandom()
-    random_string = ''.join([random_generator.choice(string.ascii_lowercase) for i in xrange(10)])
+    random_string = ''.join([
+        random_generator.choice(string.ascii_lowercase) for i in range(10)
+    ])
     connection_name = '{0}-{1}-{2}'.format(
         socket.gethostname(),
         os.getpid(),
         random_string,
     )
-    
+
     hosts, user, password, vhost, port, heartbeat = parse_env()
     rabbit_logger = logging.getLogger(logger_name)
     rabbit_logger.setLevel(logging.INFO)
