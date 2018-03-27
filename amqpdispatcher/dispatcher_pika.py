@@ -5,7 +5,12 @@ import logging
 import pika
 import socket
 import sys
-import urlparse
+try:
+    # python 3
+    from urllib.parse import urlparse
+except ImportError:
+    # python 2
+    from urlparse import urlparse
 
 from amqpdispatcher.dispatcher_common import setup
 from pika import BlockingConnection as RabbitConnection
