@@ -28,7 +28,7 @@ def connect_to_hosts(connector, hosts, **kwargs):
 
 
 def main():
-    if six.PY3:
+    if not six.PY2:
         raise NotImplementedError(
             'haigha currently does not support python 3, please use pika.'
         )
