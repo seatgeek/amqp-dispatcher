@@ -15,10 +15,11 @@ class Message(object):
         :param return_info: pass only if message was returned via basic.return;
           MUST be None otherwise; default: None
         '''
-        # if isinstance(body, unicode):
-        #     if 'content_encoding' not in properties:
-        #         properties['content_encoding'] = 'utf-8'
-        #     body = body.encode(properties['content_encoding'])
+        if six.PY2:
+            if isinstance(body, unicode):
+                if 'content_encoding' not in properties:
+                    properties['content_encoding'] = 'utf-8'
+                body = body.encode(properties['content_encoding'])
 
         if not isinstance(body, (six.string_types, six.binary_type, bytearray)):
             raise TypeError("Invalid message content type %s" % (type(body)))
