@@ -5,4 +5,3 @@ nose
 pika>=0.9.14,<1.0
 pyyaml
 six
--e git://github.com/lacostej/nosyd.git#egg=nosyd
