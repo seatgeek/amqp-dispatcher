@@ -1,6 +1,20 @@
 Changelog
 =========
 
+0.11.0 (2019-01-22)
+-------------------
+
+- Remove nosyd from python 3.6 requirements. [Brendon Oleary]
+
+- Change the connection options depending on python version. [Brendon
+  Oleary]
+
+- Replace the unicode encoding check for python 2. [Brendon Oleary]
+
+- Attempt to obtain python 3.6 compatibility. [Brendon Oleary]
+
+- Readme: Update URL for installation. [Philip Cristiano]
+
 0.10.0 (2017-07-07)
 -------------------
 
