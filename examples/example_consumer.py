@@ -25,6 +25,6 @@ class Consumer(object):
 
     def shutdown(self, exception=None):
         if exception is not None:
-            logging.error(traceback.format_exc(exception))
+            logging.error(traceback.format_exc())
         else:
             logging.debug('Shut down worker cleanly')

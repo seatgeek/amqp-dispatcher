@@ -5,7 +5,8 @@ import logging
 import pika
 import socket
 import sys
-import urlparse
+
+from six.moves.urllib.parse import urlparse, urlunparse
 
 from amqpdispatcher.dispatcher_common import setup
 from pika import BlockingConnection as RabbitConnection
@@ -27,7 +28,7 @@ def connection_params(user, password, host, port, vhost, heartbeat):
 
     query = 'heartbeat={0}'.format(heartbeat)
 
-    url = urlparse.urlunparse(('amqp', netloc, vhost, '', query, ''))
+    url = urlunparse(('amqp', netloc, vhost, '', query, ''))
     params = pika.URLParameters(url)
     params.socket_timeout = 5
     return params

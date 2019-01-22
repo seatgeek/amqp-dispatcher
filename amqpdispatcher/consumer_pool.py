@@ -5,8 +5,10 @@ import gevent
 import gevent.queue
 import logging
 
+import six
+
 from amqpdispatcher.amqp_proxy import AMQPProxy
-from haigha.message import Message
+from amqpdispatcher.message import Message
 
 
 class ConsumerPool(object):

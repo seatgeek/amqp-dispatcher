@@ -1,6 +1,21 @@
 
 startup_handler: example_startup:startup
 
+queues:
+  - queue: test_queue
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: test
+        routing_key: queue
+
 consumers:
   - consumer: example_consumer:Consumer
     consumer_count: 2

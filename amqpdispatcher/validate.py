@@ -27,13 +27,13 @@ def validate_startup_handler(config):
     handler = None
     try:
         handler = load_module_object(startup_handler_str)
-    except ImportError, e:
+    except ImportError as e:
         print('[{0}] Invalid startup_handler: {1}'.format(
             startup_handler_str,
             e
         ))
         return False
-    except AttributeError, e:
+    except AttributeError as e:
         print('[{0}] Invalid startup_handler: {1}'.format(
             startup_handler_str,
             e
@@ -71,10 +71,10 @@ def is_consumer_valid(consumer):
         if consumer_klass is None:
             print('[{0}] Invalid consumer class'.format(consumer_str))
             is_valid = False
-    except ImportError, e:
+    except ImportError as e:
         print('[{0}] Invalid consumer class: {1}'.format(consumer_str, e))
         is_valid = False
-    except AttributeError, e:
+    except AttributeError as e:
         print('[{0}] Invalid consumer class: {1}'.format(consumer_str, e))
         is_valid = False
 

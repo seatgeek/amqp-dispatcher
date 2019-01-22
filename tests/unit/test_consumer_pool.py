@@ -3,9 +3,14 @@
 
 from unittest import TestCase
 
+import six
+
 from mock import MagicMock, call
-from haigha.channel import Channel
 import gevent
+if six.PY2:
+    from haigha.channel import Channel
+else:
+    from pika.channel import Channel
 
 from amqpdispatcher.consumer_pool import ConsumerPool
 
