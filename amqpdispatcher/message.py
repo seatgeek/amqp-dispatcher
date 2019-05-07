@@ -73,5 +73,5 @@ class Message(object):
     def __str__(self):
         return ("Message[body: %s, delivery_info: %s, return_info: %s, "
                 "properties: %s]") %\
-            (str(self._body).encode('unicode_escape'),
+            (str(self._body).encode('utf-8'),
              self._delivery_info, self.return_info, self._properties)
