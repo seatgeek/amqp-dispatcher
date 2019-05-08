@@ -71,7 +71,9 @@ class Message(object):
         return self._properties
 
     def __str__(self):
-        return ("Message[body: %s, delivery_info: %s, return_info: %s, "
-                "properties: %s]") %\
-            (str(self._body).encode('utf-8'),
-             self._delivery_info, self.return_info, self._properties)
+        if six.PY2:
+            body = (str(self._body).encode("string_escape"))
+        else:
+            body = self._body.decode("utf-8")
+        return ("Message[body: {}, delivery_info: {}, return_info: {}, "
+                "properties: {}]").format(body, self._delivery_info, self.return_info, self._properties)
