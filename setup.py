@@ -17,7 +17,7 @@ def run_setup():
         version=amqpdispatcher.__version__,
         description='A daemon gevent to run AMQP consumers',
         keywords='amqp',
-        url='http://github.com/opschops/amqp-dispatcher',
+        url='http://github.com/seatgeek/amqp-dispatcher',
         author='Jose Diaz-Gonzalez',
         author_email='opschops@josediazgonzalez.com',
         license='BSD',

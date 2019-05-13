@@ -10,7 +10,7 @@ A daemon to run AMQP consumers
 Requirements
 ============
 
-* Python 2.6+
+* Python 2.7+
 
 Installation
 ============
