@@ -315,7 +315,7 @@ def setup(logger_name, connector, connect_to_hosts):
         )
 
         consume_channel.basic_consume(
-            consumer_callback=pool.handle,
+            pool.handle,
             queue=queue_name,
             no_ack=False,
         )
