@@ -54,6 +54,32 @@ class PikaChannelProxy(ChannelProxy):
         consumer_count = ret.method.consumer_count
         return name, message_count, consumer_count
 
+    def basic_consume(self,
+                      consumer_callback=None,
+                      queue='',
+                      no_ack=False,
+                      exclusive=False,
+                      consumer_tag=None,
+                      arguments=None):
+        if arguments is None:
+            arguments = {}
+
+        no_local = arguments.get('no_local', False)
+        nowait = arguments.get('nowait', True)
+        ticket = arguments.get('ticket', None)
+        cb = arguments.get('cb', None)
+        if consumer_tag is None:
+            consumer_tag = ''
+        return self._channel.basic.consume(queue=queue,
+                                           on_message_callback=consumer_callback,
+                                           no_ack=no_ack,
+                                           exclusive=exclusive,
+                                           consumer_tag=consumer_tag,
+                                           no_local=no_local,
+                                           nowait=nowait,
+                                           ticket=ticket,
+                                           cb=cb)
+
 
 class HaighaChannelProxy(ChannelProxy):
     def basic_ack(self, delivery_tag=0, multiple=False):
@@ -85,7 +111,7 @@ class HaighaChannelProxy(ChannelProxy):
                                        is_global=all_channels)
 
     def basic_consume(self,
-                      consumer_callback,
+                      consumer_callback=None,
                       queue='',
                       no_ack=False,
                       exclusive=False,
