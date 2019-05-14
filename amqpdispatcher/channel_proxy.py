@@ -9,7 +9,7 @@ from amqpdispatcher.message import Message
 def proxy_channel(channel):
     klass = '{0}.{1}'.format(channel.__module__, channel.__class__.__name__)
     if klass == 'pika.adapters.blocking_connection.BlockingChannel':
-        return PikaChannelProxy(channel)
+        return PikaBlockingChannelProxy(channel)
     if klass == 'pika.channel.Channel':
         return PikaChannelProxy(channel)
     if klass == 'haigha.channel.Channel':
@@ -54,6 +54,8 @@ class PikaChannelProxy(ChannelProxy):
         consumer_count = ret.method.consumer_count
         return name, message_count, consumer_count
 
+
+class PikaBlockingChannelProxy(PikaChannelProxy):
     def basic_consume(self,
                       consumer_callback=None,
                       queue='',
@@ -64,7 +66,6 @@ class PikaChannelProxy(ChannelProxy):
         if arguments is None:
             arguments = {}
 
-        cb = arguments.pop('cb', None)
         if consumer_tag is None:
             consumer_tag = ''
         print(self._channel)
@@ -73,8 +74,7 @@ class PikaChannelProxy(ChannelProxy):
                                            auto_ack=not no_ack,
                                            exclusive=exclusive,
                                            consumer_tag=consumer_tag,
-                                           arguments=arguments,
-                                           callback=cb)
+                                           arguments=arguments)
 
 
 class HaighaChannelProxy(ChannelProxy):
