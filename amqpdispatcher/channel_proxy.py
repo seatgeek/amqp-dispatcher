@@ -64,21 +64,16 @@ class PikaChannelProxy(ChannelProxy):
         if arguments is None:
             arguments = {}
 
-        no_local = arguments.get('no_local', False)
-        nowait = arguments.get('nowait', True)
-        ticket = arguments.get('ticket', None)
-        cb = arguments.get('cb', None)
+        cb = arguments.pop('cb', None)
         if consumer_tag is None:
             consumer_tag = ''
-        return self._channel.basic.consume(queue=queue,
+        return self._channel.basic_consume(queue=queue,
                                            on_message_callback=consumer_callback,
-                                           no_ack=no_ack,
+                                           auto_ack=not no_ack,
                                            exclusive=exclusive,
                                            consumer_tag=consumer_tag,
-                                           no_local=no_local,
-                                           nowait=nowait,
-                                           ticket=ticket,
-                                           cb=cb)
+                                           arguments=arguments,
+                                           callback=cb)
 
 
 class HaighaChannelProxy(ChannelProxy):
