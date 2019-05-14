@@ -67,6 +67,7 @@ class PikaChannelProxy(ChannelProxy):
         cb = arguments.pop('cb', None)
         if consumer_tag is None:
             consumer_tag = ''
+        print(self._channel)
         return self._channel.basic_consume(queue=queue,
                                            on_message_callback=consumer_callback,
                                            auto_ack=not no_ack,
