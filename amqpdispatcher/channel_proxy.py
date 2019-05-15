@@ -106,7 +106,7 @@ class HaighaChannelProxy(ChannelProxy):
                                        is_global=all_channels)
 
     def basic_consume(self,
-                      consumer_callback=None,
+                      consumer_callback,
                       queue='',
                       no_ack=False,
                       exclusive=False,
