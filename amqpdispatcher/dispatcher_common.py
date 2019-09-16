@@ -2,6 +2,9 @@
 # -*- coding:utf-8 -*-
 
 import argparse
+from asyncio import AbstractEventLoop
+
+import aio_pika
 import gevent
 import importlib
 import inspect
@@ -13,6 +16,7 @@ import socket
 import yaml
 
 import six
+from aio_pika import Queue, Connection, Channel
 from six.moves.urllib.parse import parse_qs, urlparse
 
 from amqpdispatcher.channel_proxy import proxy_channel
@@ -55,16 +59,14 @@ def channel_closed_cb(ch, reply_code=None, reply_text=None):
     return
 
 
-def create_connection_closed_cb(connection):
+def create_connection_closed_cb():
     def connection_closed_cb():
         logger = logging.getLogger('amqp-dispatcher')
-        logger.info("AMQP broker connection closed; close-info: %s" % (
-            connection.close_info,
-        ))
+        logger.info("AMQP broker connection closed; close-info")
     return connection_closed_cb
 
 
-def create_queue(connection, queue):
+async def create_queue(channel: Channel, queue) -> Queue:
     """creates a queue synchronously"""
     logger = logging.getLogger('amqp-dispatcher')
     name = queue['queue']
@@ -74,7 +76,6 @@ def create_queue(connection, queue):
     exclusive = bool(queue.get('exclusive', False))
 
     passive = False
-    nowait = False
 
     arguments = {}
     queue_args = [
@@ -90,47 +91,40 @@ def create_queue(connection, queue):
         if queue.get(queue_arg):
             arguments[key] = queue.get(queue_arg)
 
-    connection = proxy_connection(connection)
-    ch = connection.channel(synchronous=True)
-    ch = proxy_channel(ch)
-    ret = ch.queue_declare(
-        queue=name,
+    queue: Queue = await channel.declare_queue(
+        name=name,
         passive=passive,
         exclusive=exclusive,
         durable=durable,
         auto_delete=auto_delete,
-        nowait=nowait,
+        # nowait=nowait,
         arguments=arguments
     )
-    name, message_count, consumer_count = ret
     log_message = "Queue {0} - {1} messages and {1} consumers connected"
-    logger.info(log_message.format(name, message_count, consumer_count))
+    logger.info(log_message.format(queue.name, queue.declaration_result.message_count, queue.declaration_result.consumer_count))
+
+    return queue
 
 
-def bind_queue(connection, queue):
+async def bind_queue(created_queue: Queue, queue_spec) -> None:
     """binds a queue to the bindings identified in the doc"""
     logger = logging.getLogger('amqp-dispatcher')
-    logger.debug("Binding queue {0}".format(queue))
-    bindings = queue.get('bindings')
-    connection = proxy_connection(connection)
-    ch = connection.channel(synchronous=True)
-    ch = proxy_channel(ch)
-    arg_spec = inspect.getargspec(ch.queue_bind)
-    name = queue.get('queue')
+    logger.debug("Binding queue {0}".format(queue_spec))
+    bindings = queue_spec.get('bindings')
+
+    name = queue_spec.get('queue')
     for binding in bindings:
         exchange = binding['exchange']
         key = binding['routing_key']
         logger.info("bind {0} to {1}:{2}".format(name, exchange, key))
-        if 'nowait' in arg_spec.args:
-            ch.queue_bind(name, exchange, key, nowait=False)
-        else:
-            ch.queue_bind(name, exchange, key)
+
+        await created_queue.bind(exchange, key)
 
 
-def create_and_bind_queues(connection, queues):
+async def create_and_bind_queues(channel: Channel, queues):
     for queue in queues:
-        create_queue(connection, queue)
-        bind_queue(connection, queue)
+        created_queue = await create_queue(channel, queue)
+        await bind_queue(created_queue, queue)
 
 
 def parse_env():
@@ -142,15 +136,15 @@ def parse_env():
     hosts = user = password = vhost = None
     port = 5672
 
-    cp = urlparse(rabbitmq_url)
-    hosts_string = cp.hostname
+    parsed_url = urlparse(rabbitmq_url)
+    hosts_string = parsed_url.hostname
     hosts = hosts_string.split(",")
-    if cp.port:
-        port = int(cp.port)
-    user = cp.username
-    password = cp.password
-    vhost = cp.path
-    query = cp.query
+    if parsed_url.port:
+        port = int(parsed_url.port)
+    user = parsed_url.username
+    password = parsed_url.password
+    vhost = parsed_url.path
+    query = parsed_url.query
 
     # workaround for bug in 12.04
     if '?' in vhost and query == '':
@@ -162,7 +156,7 @@ def parse_env():
     if heartbeat_override:
         heartbeat = int(heartbeat_override)
 
-    return (hosts, user, password, vhost, port, heartbeat)
+    return (hosts, user, password, vhost, port, heartbeat, parsed_url)
 
 
 def parse_heartbeat(query):
@@ -242,7 +236,17 @@ def message_pump_greenthread(connection):
     return exit_code
 
 
-def setup(logger_name, connector, connect_to_hosts):
+async def launch_queue(queue: Queue):
+    async with queue.iterator() as queue_iter:
+        async for message in queue_iter:
+            async with message.process():
+                print(message.body)
+
+                if queue.name in message.body.decode():
+                    break
+
+
+async def setup(logger_name, loop: AbstractEventLoop):
     logger = logging.getLogger('amqp-dispatcher')
 
     args = get_args_from_cli()
@@ -264,38 +268,23 @@ def setup(logger_name, connector, connect_to_hosts):
         random_string,
     )
 
-    hosts, user, password, vhost, port, heartbeat = parse_env()
-    rabbit_logger = logging.getLogger(logger_name)
-    rabbit_logger.setLevel(logging.INFO)
-    conn = connect_to_hosts(
-        connector,
-        hosts,
-        port=port,
-        transport='gevent',
-        user=user,
-        password=password,
-        vhost=vhost,
-        logger=rabbit_logger,
-        heartbeat=heartbeat,
-        client_properties={
-            'connection_name': connection_name,
-        },
+    full_url = os.getenv('RABBITMQ_URL',
+                         'amqp://guest:guest@localhost:5672/')
+
+    connection = await aio_pika.connect_robust(
+        full_url, loop=loop
     )
-    if conn is None:
+
+    if connection is None:
         logger.warning("No connection -- returning")
         return
 
+    channel = await connection.channel()
     queues = config.get('queues')
     if queues:
-        create_and_bind_queues(conn, queues)
+        await create_and_bind_queues(channel, queues)
 
-    conn = proxy_connection(conn)
-    conn.add_on_close_callback(create_connection_closed_cb(conn))
-
-    # Create message channel
-    channel = conn.channel()
-    channel = proxy_channel(channel)
-    channel.add_close_listener(channel_closed_cb)
+    connection.add_on_close_callback(create_connection_closed_cb())
 
     for consumer in config.get('consumers', []):
         queue_name = consumer['queue']
@@ -304,15 +293,7 @@ def setup(logger_name, connector, connect_to_hosts):
         consumer_count = consumer.get('consumer_count', 1)
 
         consumer_klass = load_consumer(consumer_str)
-        consume_channel = conn.channel()
-        consume_channel = proxy_channel(consume_channel)
-        consume_channel.basic_qos(prefetch_count=prefetch_count)
-        pool = ConsumerPool(
-            consume_channel,
-            consumer_klass,
-            gevent.Greenlet,
-            consumer_count
-        )
+        consume_channel: Channel = await connection.channel()
 
         consume_channel.basic_consume(
             consumer_callback=pool.handle,

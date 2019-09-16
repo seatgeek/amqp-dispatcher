@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-
+import asyncio
 import logging
 import os
 
+from amqpdispatcher.dispatcher_aio_pika import main_aio_pika
 from amqpdispatcher.dispatcher_common import get_args_from_cli
-from amqpdispatcher.dispatcher_haigha import main as main_haigha
-from amqpdispatcher.dispatcher_pika import main as main_pika
 from amqpdispatcher.validate import validate
 
 
@@ -22,11 +21,11 @@ def main():
     if args.validate:
         return validate(args.config)
 
+    asyncio.get_event_loop()
+
     logger = logging.getLogger('amqp-dispatcher')
     logger.info('Connection: {0}'.format(args.connection))
-    if args.connection == 'pika':
-        return main_pika()
-    return main_haigha()
+    return main_aio_pika()
 
 if __name__ == '__main__':
     main()

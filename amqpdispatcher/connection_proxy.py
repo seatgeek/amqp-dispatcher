@@ -22,6 +22,11 @@ class ConnectionProxy(object):
         raise AttributeError(method_name)
 
 
+class SelectPikaConnectionProxy(ConnectionProxy):
+    def __init__(self, connection):
+        self._connection = connection
+
+
 class BlockingPikaConnectionProxy(ConnectionProxy):
     def add_on_close_callback(self, callback_method):
         pass

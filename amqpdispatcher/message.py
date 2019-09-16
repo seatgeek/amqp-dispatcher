@@ -1,5 +1,4 @@
-import six
-
+from aio_pika import Message as AioPikaMessage
 
 class Message(object):
 
@@ -7,7 +6,7 @@ class Message(object):
     Represents an AMQP message.
     '''
 
-    def __init__(self, body='', delivery_info=None, return_info=None,
+    def __init__(self, raw_message: AioPikaMessage, delivery_info=None, return_info=None,
                  **properties):
         '''
         :param delivery_info: pass only if messages was received via
@@ -15,16 +14,11 @@ class Message(object):
         :param return_info: pass only if message was returned via basic.return;
           MUST be None otherwise; default: None
         '''
-        if six.PY2:
-            if isinstance(body, unicode):
-                if 'content_encoding' not in properties:
-                    properties['content_encoding'] = 'utf-8'
-                body = body.encode(properties['content_encoding'])
+        body = raw_message.body
+        if not isinstance(body, (bytes, bytearray)):
+            raise TypeError("Invalid message content type {0}".format(type(body)))
 
-        if not isinstance(body, (six.string_types, six.binary_type, bytearray)):
-            raise TypeError("Invalid message content type %s" % (type(body)))
-
-        self._body = body
+        self._body = body.decode('utf-8')
         self._delivery_info = delivery_info
         self._return_info = return_info
         self._properties = properties
@@ -71,9 +65,6 @@ class Message(object):
         return self._properties
 
     def __str__(self):
-        if six.PY2:
-            body = (str(self._body).encode("string_escape"))
-        else:
-            body = self._body.decode("utf-8")
+        body = self._body.decode("utf-8")
         return ("Message[body: {}, delivery_info: {}, return_info: {}, "
                 "properties: {}]").format(body, self._delivery_info, self.return_info, self._properties)
