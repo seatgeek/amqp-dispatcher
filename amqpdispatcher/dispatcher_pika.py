@@ -50,17 +50,3 @@ def connect_to_hosts(connector, hosts, port, user, password, vhost, heartbeat, *
         except socket.error:
             logger.info('Error connecting to {0}'.format(host))
     logger.error('Could not connect to any hosts')
-
-
-def main():
-    greenlet = setup('pika',
-                     RabbitConnection,
-                     connect_to_hosts)
-    if greenlet is not None:
-        greenlet.start()
-        greenlet.join()
-        sys.exit(greenlet.get())
-
-
-if __name__ == '__main__':
-    main()

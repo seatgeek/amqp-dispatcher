@@ -2,9 +2,10 @@
 # -*- coding:utf-8 -*-
 
 import argparse
+import asyncio
 import types
 from asyncio import AbstractEventLoop
-from typing import Dict, Optional, Type, Awaitable, Callable
+from typing import Dict, Optional, Type, Awaitable, Callable, Any
 import functools
 from typing_extensions import Protocol
 
@@ -18,8 +19,8 @@ import socket
 import yaml
 
 import six
-from aio_pika import Queue, Channel, RobustConnection, IncomingMessage
-from six.moves.urllib.parse import parse_qs, urlparse
+from aio_pika import Queue, Channel, RobustConnection, IncomingMessage, Connection
+from six.moves.urllib.parse import urlparse
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.message import Message
@@ -163,55 +164,8 @@ def parse_env():
     if '?' in vhost and query == '':
         vhost, query = vhost.split('?', 1)
 
-    heartbeat = parse_heartbeat(query)
-    # Support heartbeat override
-    heartbeat_override = os.getenv('RABBITMQ_HEARTBEAT')
-    if heartbeat_override:
-        heartbeat = int(heartbeat_override)
-
+    heartbeat = 0
     return (hosts, user, password, vhost, port, heartbeat, parsed_url)
-
-
-def parse_heartbeat(query):
-    logger = logging.getLogger('amqp-dispatcher')
-
-    default_heartbeat = None
-    heartbeat = default_heartbeat
-    if query:
-        qs = parse_qs(query)
-        heartbeat = qs.get('heartbeat', default_heartbeat)
-    else:
-        logger.debug('No heartbeat specified, using broker defaults')
-
-    if isinstance(heartbeat, (list, tuple)):
-        if len(heartbeat) == 0:
-            logger.warning('No heartbeat value set, using default')
-            heartbeat = default_heartbeat
-        elif len(heartbeat) == 1:
-            heartbeat = heartbeat[0]
-        else:
-            logger.warning(
-                'Multiple heartbeat values set, using broker default: {0}'
-                .format(heartbeat)
-            )
-            heartbeat = default_heartbeat
-
-    if type(heartbeat) == str and heartbeat.lower() == 'none':
-        return None
-
-    if heartbeat is None:
-        return heartbeat
-
-    try:
-        heartbeat = int(heartbeat)
-    except ValueError:
-        logger.warning(
-            'Unable to cast heartbeat to int, using broker default: {0}'
-            .format(heartbeat)
-        )
-        heartbeat = default_heartbeat
-
-    return heartbeat
 
 
 def load_module(module_name: str) -> types.ModuleType:
@@ -230,43 +184,49 @@ def load_module_object(module_object_str):
     return getattr(module, obj_name)
 
 
-def message_pump_greenthread(connection):
+async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any]):
     logger = logging.getLogger('amqp-dispatcher')
-    logger.debug('Starting message pump')
-    exit_code = 0
-    try:
-        while connection is not None:
-            # Pump
-            connection.read_frames()
 
-            # Yield to other greenlets so they don't starve
-    except Exception:
-        logger.exception("error in message pump thread")
-        exit_code = 1
-    finally:
-        logger.debug('Leaving message pump')
-    return exit_code
+    queue_name = consumer['queue']
+    prefetch_count = consumer.get('prefetch_count', 1)
+    consumer_str = consumer.get('consumer')
+    # consumer_count = consumer.get('consumer_count', 1)
 
+    consumer_class = load_consumer(consumer_str)
 
-async def launch_queue(queue: Queue):
+    consume_channel: Channel = await connection.channel()
+    publish_channel: Channel = await connection.channel()
+
+    await consume_channel.set_qos(prefetch_count=prefetch_count)
+
+    queue = created_queues[queue_name]
+
     async with queue.iterator() as queue_iter:
+        consumer_instance = consumer_class()
         async for message in queue_iter:
-            async with message.process():
-                print(message.body)
+            # ignore_processed=True allows us to manually ack
+            # and reject the message without
+            # the context manager making the decisions for us.
+            async with message.process(ignore_processed=True):
+                processed_message: IncomingMessage = message
+                logger.info("a message was received, delivery tag: {0}".format(processed_message.delivery_tag))
 
-                if queue.name in message.body.decode():
-                    break
+                wrapped_message = Message(processed_message)
+                amqp_proxy = AMQPProxy(wrapped_message, connection, publish_channel)
 
+                try:
+                    logger.info("consuming message")
+                    await consumer_instance.consume(amqp_proxy, wrapped_message)
 
-def create_consumer_callback(consumer_instance: DispatcherConsumer, wrapped_message: Message, proxy: AMQPProxy) -> Callable[[], Awaitable[None]]:
-    async def callback():
-        try:
-            await consumer_instance.consume(proxy, wrapped_message)
-        except Exception as e:
-            await consumer_instance.shutdown(e)
-            raise
+                    if not amqp_proxy.has_responded_to_message:
+                        await amqp_proxy.ack()
 
-    return callback
+                except Exception as e:
+                    logger.error("consuming message error: {0}".format(e))
+                    await consumer_instance.shutdown(e)
+
+                    if not amqp_proxy.has_responded_to_message:
+                        await amqp_proxy.reject(requeue=True)
 
 
 async def setup(logger_name, loop: AbstractEventLoop):
@@ -310,32 +270,10 @@ async def setup(logger_name, loop: AbstractEventLoop):
 
     connection.add_close_callback(create_connection_closed_cb())
 
+    consumer_tasks = []
     for consumer in config.get('consumers', []):
-        queue_name = consumer['queue']
-        prefetch_count = consumer.get('prefetch_count', 1)
-        consumer_str = consumer.get('consumer')
-        consumer_count = consumer.get('consumer_count', 1)
+        consumer_tasks.append(
+            create_consumption_task(connection, consumer, created_queues)
+        )
 
-        consumer_class = load_consumer(consumer_str)
-        consume_channel: Channel = await connection.channel()
-
-        queue = created_queues[queue_name]
-        async with queue.iterator() as queue_iter:
-            consumer_instance = consumer_class()
-            async for message in queue_iter:
-                async with message.process():
-                    logger.info("a message was received")
-
-                    wrapped_message = Message(message)
-                    amqp_proxy = AMQPProxy(wrapped_message)
-
-                    try:
-                        await queue.consume(
-                            callback=create_consumer_callback(consumer_instance, wrapped_message, amqp_proxy),
-                            no_ack=False,
-                        )
-                        if not amqp_proxy.has_responded_to_message:
-                            await amqp_proxy.ack()
-                    except Exception:
-                        if not amqp_proxy.has_responded_to_message:
-                            await amqp_proxy.reject(requeue=True)
+    await asyncio.gather(*consumer_tasks)

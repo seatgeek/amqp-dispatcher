@@ -20,7 +20,6 @@ class Message(object):
 
         self._raw_message = raw_message
         self._body = body.decode('utf-8')
-        self._delivery_tag = raw_message.delivery_tag
 
     @property
     def raw_message(self):
@@ -29,10 +28,6 @@ class Message(object):
     @property
     def body(self):
         return self._body
-
-    @property
-    def delivery_tag(self):
-        return self._delivery_tag
 
     def __len__(self):
         return len(self._body)
