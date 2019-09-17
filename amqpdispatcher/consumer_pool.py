@@ -3,7 +3,6 @@
 
 import logging
 
-import six
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.message import Message
@@ -38,10 +37,6 @@ class ConsumerPool(object):
         if len(args) == 3:
             delivery_info = self._to_dict(args[0])
             properties = self._to_dict(args[1])
-
-            print(args)
-            print(delivery_info)
-            print(properties)
 
             body = args[2]
             msg = Message(body, delivery_info, **properties)

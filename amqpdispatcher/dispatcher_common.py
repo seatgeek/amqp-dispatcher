@@ -2,9 +2,11 @@
 # -*- coding:utf-8 -*-
 
 import argparse
+import types
 from asyncio import AbstractEventLoop
-from typing import Dict
+from typing import Dict, Optional, Type, Awaitable, Callable
 import functools
+from typing_extensions import Protocol
 
 import aio_pika
 import importlib
@@ -16,9 +18,19 @@ import socket
 import yaml
 
 import six
-from aio_pika import Queue, Channel, RobustConnection
+from aio_pika import Queue, Channel, RobustConnection, IncomingMessage
 from six.moves.urllib.parse import parse_qs, urlparse
 
+from amqpdispatcher.amqp_proxy import AMQPProxy
+from amqpdispatcher.message import Message
+
+
+class DispatcherConsumer(Protocol):
+    async def consume(self, amqp_proxy: AMQPProxy, message: Message) -> None:
+        ...
+
+    async def shutdown(self, exception: Optional[Exception] = None) -> None:
+        ...
 
 
 def get_args_from_cli():
@@ -202,11 +214,11 @@ def parse_heartbeat(query):
     return heartbeat
 
 
-def load_module(module_name):
+def load_module(module_name: str) -> types.ModuleType:
     return importlib.import_module(module_name)
 
 
-def load_consumer(consumer_str):
+def load_consumer(consumer_str: str) -> Type[DispatcherConsumer]:
     logger = logging.getLogger('amqp-dispatcher')
     logger.debug('Loading consumer {0}'.format(consumer_str))
     return load_module_object(consumer_str)
@@ -228,7 +240,6 @@ def message_pump_greenthread(connection):
             connection.read_frames()
 
             # Yield to other greenlets so they don't starve
-            gevent.sleep()
     except Exception:
         logger.exception("error in message pump thread")
         exit_code = 1
@@ -246,8 +257,17 @@ async def launch_queue(queue: Queue):
                 if queue.name in message.body.decode():
                     break
 
-def consumer_message_wrapper():
-    pass
+
+def create_consumer_callback(consumer_instance: DispatcherConsumer, wrapped_message: Message, proxy: AMQPProxy) -> Callable[[], Awaitable[None]]:
+    async def callback():
+        try:
+            await consumer_instance.consume(proxy, wrapped_message)
+        except Exception as e:
+            await consumer_instance.shutdown(e)
+            raise
+
+    return callback
+
 
 async def setup(logger_name, loop: AbstractEventLoop):
     logger = logging.getLogger('amqp-dispatcher')
@@ -305,11 +325,17 @@ async def setup(logger_name, loop: AbstractEventLoop):
             async for message in queue_iter:
                 async with message.process():
                     logger.info("a message was received")
-                    await queue.consume(
-                        callback=consumer_instance.consume,
-                        no_ack=True,
-                    )
 
-                    if queue.name in message.body.decode():
-                        break
+                    wrapped_message = Message(message)
+                    amqp_proxy = AMQPProxy(wrapped_message)
 
+                    try:
+                        await queue.consume(
+                            callback=create_consumer_callback(consumer_instance, wrapped_message, amqp_proxy),
+                            no_ack=False,
+                        )
+                        if not amqp_proxy.has_responded_to_message:
+                            await amqp_proxy.ack()
+                    except Exception:
+                        if not amqp_proxy.has_responded_to_message:
+                            await amqp_proxy.reject(requeue=True)

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-from aio_pika import Channel
+from typing import Dict, Any
+
+from aio_pika import Channel, Exchange
+from aio_pika import Message as AioPikaMessage
 
 from amqpdispatcher.message import Message
 
@@ -9,15 +12,17 @@ class AMQPProxy(object):
     _channel: Channel
     _terminal_state: bool
     _msg: Message
+    _exchanges: Dict[str, Exchange]
 
-    def __init__(self, channel: Channel, msg: Message):
-        self._channel = channel
+    def __init__(self, msg: Message, channel: Channel):
         self._msg = msg
+        self._channel = channel
         self._terminal_state = False
+        self._exchanges = {}
 
     @property
     def tag(self):
-        return self._msg.delivery_info['delivery_tag']
+        return self._msg.delivery_tag
 
     @property
     def has_responded_to_message(self):
@@ -25,18 +30,25 @@ class AMQPProxy(object):
 
     async def ack(self):
         self._error_if_already_terminated()
-        await self._channel.basic_ack(self.tag)
+        await self._msg.raw_message.ack()
 
     async def nack(self):
         self._error_if_already_terminated()
-        self._channel.basic_nack(self.tag)
+        await self._msg.raw_message.nack()
 
     async def reject(self, requeue=True):
         self._error_if_already_terminated()
-        self._channel.basic_reject(self.tag, requeue=requeue)
+        await self._msg.raw_message.reject(requeue=requeue)
 
-    async def publish(self, exchange, routing_key, headers, body):
-        self._channel.basic_publish(exchange, routing_key, body, headers)
+    async def publish(self, exchange: str, routing_key: str, headers: Dict[Any, Any], body: bytes):
+        if self._exchanges.get(exchange):
+            exchange = self._exchanges.get(exchange)
+        else:
+            # what happens if an exchange already exists?
+            exchange = await self._channel.declare_exchange(exchange)
+
+        message = AioPikaMessage(body=body, headers=headers)
+        await exchange.publish(message, routing_key)
 
     def _error_if_already_terminated(self):
         if self._terminal_state:
