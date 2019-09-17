@@ -6,6 +6,9 @@ services:
       - .:/app
     depends_on:
       - rabbit
+    environment:
+      NOMAD_ALLOC_ID: 17
+      NOMAD_JOB_NAME: 2000
   rabbit:
     ports:
       - "15673:15672"

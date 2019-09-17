@@ -158,7 +158,7 @@ def load_module_object(module_object_str):
     return getattr(module, obj_name)
 
 
-async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any]):
+async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any], connection_name: str):
     logger = logging.getLogger('amqp-dispatcher')
 
     queue_name = consumer['queue']
@@ -174,8 +174,13 @@ async def create_consumption_task(connection: Connection, consumer: Any, created
     await consume_channel.set_qos(prefetch_count=prefetch_count)
 
     queue = created_queues[queue_name]
+    random_generator = random.SystemRandom()
 
-    async with queue.iterator() as queue_iter:
+    random_string = ''.join([
+        random_generator.choice(string.ascii_lowercase) for i in range(10)
+    ])
+
+    async with queue.iterator(consumer_tag="{0} [{1}] {2}".format(connection_name, consumer_str, random_string)) as queue_iter:
         consumer_instance = consumer_class()
         async for message in queue_iter:
             # ignore_processed=True allows us to manually ack
@@ -219,24 +224,20 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         startup_handler()
         logger.info('Startup handled')
 
-    random_generator = random.SystemRandom()
-    random_string = ''.join([
-        random_generator.choice(string.ascii_lowercase) for i in range(10)
-    ])
-
     environment = Environment.create()
 
-    connection_name = '{0}.{1}.{2}'.format(
+    connection_name = '{0}.{1}'.format(
         environment.nomad_job_name,
         environment.nomad_alloc_id,
-        random_string,
     )
 
     full_url = os.getenv('RABBITMQ_URL',
                          'amqp://guest:guest@localhost:5672/')
 
     connection: RobustConnection = await aio_pika.connect_robust(
-        full_url, loop=loop
+        full_url, loop=loop, client_properties={
+            "connection_name": connection_name
+        }, connection_name=connection_name
     )
 
     if connection is None:
@@ -254,7 +255,7 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
     consumer_tasks = []
     for consumer in config.get('consumers', []):
         consumer_tasks.append(
-            create_consumption_task(connection, consumer, created_queues)
+            create_consumption_task(connection, consumer, created_queues, connection_name)
         )
 
     await asyncio.gather(*consumer_tasks)
