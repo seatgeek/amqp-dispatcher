@@ -4,8 +4,7 @@ import asyncio
 import logging
 import os
 
-from amqpdispatcher.dispatcher_aio_pika import main_aio_pika
-from amqpdispatcher.dispatcher_common import get_args_from_cli
+from amqpdispatcher.dispatcher_common import get_args_from_cli, setup
 from amqpdispatcher.validate import validate
 
 
@@ -25,7 +24,7 @@ def main():
     logger.info('Connection: {0}'.format(args.connection))
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main_aio_pika(loop))
+    loop.run_until_complete(setup('pika', loop))
     loop.close()
 
 
