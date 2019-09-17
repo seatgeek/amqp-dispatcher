@@ -5,8 +5,7 @@ import argparse
 import asyncio
 import types
 from asyncio import AbstractEventLoop
-from typing import Dict, Optional, Type, Awaitable, Callable, Any
-import functools
+from typing import Dict, Optional, Type, Any
 from typing_extensions import Protocol
 
 import aio_pika
@@ -23,6 +22,7 @@ from aio_pika import Queue, Channel, RobustConnection, IncomingMessage, Connecti
 from six.moves.urllib.parse import urlparse
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from amqpdispatcher.environment import Environment
 from amqpdispatcher.message import Message
 
 
@@ -142,32 +142,6 @@ async def create_and_bind_queues(channel: Channel, queues):
     return created_queues
 
 
-def parse_env():
-    """returns tuple containing
-    HOSTS, USER, PASSWORD, VHOST, HEARTBEAT
-    """
-    rabbitmq_url = os.getenv('RABBITMQ_URL',
-                             'amqp://guest:guest@localhost:5672/')
-    port = 5672
-
-    parsed_url = urlparse(rabbitmq_url)
-    hosts_string = parsed_url.hostname
-    hosts = hosts_string.split(",")
-    if parsed_url.port:
-        port = int(parsed_url.port)
-    user = parsed_url.username
-    password = parsed_url.password
-    vhost = parsed_url.path
-    query = parsed_url.query
-
-    # workaround for bug in 12.04
-    if '?' in vhost and query == '':
-        vhost, query = vhost.split('?', 1)
-
-    heartbeat = 0
-    return (hosts, user, password, vhost, port, heartbeat, parsed_url)
-
-
 def load_module(module_name: str) -> types.ModuleType:
     return importlib.import_module(module_name)
 
@@ -229,7 +203,11 @@ async def create_consumption_task(connection: Connection, consumer: Any, created
                         await amqp_proxy.reject(requeue=True)
 
 
-async def setup(logger_name, loop: AbstractEventLoop):
+def extract_environment():
+    pass
+
+
+async def initialize_dispatcher(loop: AbstractEventLoop):
     logger = logging.getLogger('amqp-dispatcher')
 
     args = get_args_from_cli()
@@ -245,9 +223,12 @@ async def setup(logger_name, loop: AbstractEventLoop):
     random_string = ''.join([
         random_generator.choice(string.ascii_lowercase) for i in range(10)
     ])
-    connection_name = '{0}-{1}-{2}'.format(
-        socket.gethostname(),
-        os.getpid(),
+
+    environment = Environment.create()
+
+    connection_name = '{0}.{1}.{2}'.format(
+        environment.nomad_job_name,
+        environment.nomad_alloc_id,
         random_string,
     )
 
