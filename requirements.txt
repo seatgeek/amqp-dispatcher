@@ -1,5 +1,4 @@
 coverage
-gevent
 mock
 nose
 pika==1.1.0

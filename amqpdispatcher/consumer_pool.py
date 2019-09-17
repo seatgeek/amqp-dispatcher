@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import gevent
-import gevent.queue
 import logging
 
 import six

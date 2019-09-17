@@ -6,7 +6,7 @@ import pika
 import socket
 import sys
 
-from six.moves.urllib.parse import urlparse, urlunparse
+from six.moves.urllib.parse import urlunparse
 
 from amqpdispatcher.dispatcher_common import setup
 from pika import BlockingConnection as RabbitConnection

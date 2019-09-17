@@ -2,7 +2,7 @@ import logging
 import random
 import traceback
 
-import gevent
+from aio_pika import IncomingMessage
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +12,14 @@ class Consumer(object):
     def __init__(self):
         logger.info("I've been initiliazed")
 
+
+    def handle(self, incoming_message: IncomingMessage):
+        logger.info("now consuming an incoming message")
+        logger.info(incoming_message)
+
     def consume(self, amqp, msg):
         logger.debug('Consuming message:'.format(msg.body))
 
-        gevent.sleep(1)
         val = random.random()
         amqp.publish('test_exchange', 'dead_rk', {}, 'New body!')
         if val < .2:

@@ -21,11 +21,13 @@ def main():
     if args.validate:
         return validate(args.config)
 
-    asyncio.get_event_loop()
-
     logger = logging.getLogger('amqp-dispatcher')
     logger.info('Connection: {0}'.format(args.connection))
-    return main_aio_pika()
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main_aio_pika(loop))
+    loop.close()
+
 
 if __name__ == '__main__':
     main()

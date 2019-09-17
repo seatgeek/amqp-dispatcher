@@ -3,11 +3,11 @@
 
 import argparse
 from asyncio import AbstractEventLoop
+from typing import Dict
+import functools
 
 import aio_pika
-import gevent
 import importlib
-import inspect
 import logging
 import os
 import random
@@ -16,12 +16,9 @@ import socket
 import yaml
 
 import six
-from aio_pika import Queue, Connection, Channel
+from aio_pika import Queue, Channel, RobustConnection
 from six.moves.urllib.parse import parse_qs, urlparse
 
-from amqpdispatcher.channel_proxy import proxy_channel
-from amqpdispatcher.connection_proxy import proxy_connection
-from amqpdispatcher.consumer_pool import ConsumerPool
 
 
 def get_args_from_cli():
@@ -122,9 +119,14 @@ async def bind_queue(created_queue: Queue, queue_spec) -> None:
 
 
 async def create_and_bind_queues(channel: Channel, queues):
+    created_queues: Dict[str, Queue] = {}
+
     for queue in queues:
         created_queue = await create_queue(channel, queue)
+        created_queues[queue['queue']] = created_queue
         await bind_queue(created_queue, queue)
+
+    return created_queues
 
 
 def parse_env():
@@ -133,7 +135,6 @@ def parse_env():
     """
     rabbitmq_url = os.getenv('RABBITMQ_URL',
                              'amqp://guest:guest@localhost:5672/')
-    hosts = user = password = vhost = None
     port = 5672
 
     parsed_url = urlparse(rabbitmq_url)
@@ -245,6 +246,8 @@ async def launch_queue(queue: Queue):
                 if queue.name in message.body.decode():
                     break
 
+def consumer_message_wrapper():
+    pass
 
 async def setup(logger_name, loop: AbstractEventLoop):
     logger = logging.getLogger('amqp-dispatcher')
@@ -271,7 +274,7 @@ async def setup(logger_name, loop: AbstractEventLoop):
     full_url = os.getenv('RABBITMQ_URL',
                          'amqp://guest:guest@localhost:5672/')
 
-    connection = await aio_pika.connect_robust(
+    connection: RobustConnection = await aio_pika.connect_robust(
         full_url, loop=loop
     )
 
@@ -281,10 +284,11 @@ async def setup(logger_name, loop: AbstractEventLoop):
 
     channel = await connection.channel()
     queues = config.get('queues')
+    created_queues: Dict[str, Queue] = {}
     if queues:
-        await create_and_bind_queues(channel, queues)
+        created_queues = await create_and_bind_queues(channel, queues)
 
-    connection.add_on_close_callback(create_connection_closed_cb())
+    connection.add_close_callback(create_connection_closed_cb())
 
     for consumer in config.get('consumers', []):
         queue_name = consumer['queue']
@@ -292,17 +296,20 @@ async def setup(logger_name, loop: AbstractEventLoop):
         consumer_str = consumer.get('consumer')
         consumer_count = consumer.get('consumer_count', 1)
 
-        consumer_klass = load_consumer(consumer_str)
+        consumer_class = load_consumer(consumer_str)
         consume_channel: Channel = await connection.channel()
 
-        consume_channel.basic_consume(
-            consumer_callback=pool.handle,
-            queue=queue_name,
-            no_ack=False,
-        )
-        gevent.sleep()
+        queue = created_queues[queue_name]
+        async with queue.iterator() as queue_iter:
+            consumer_instance = consumer_class()
+            async for message in queue_iter:
+                async with message.process():
+                    logger.info("a message was received")
+                    await queue.consume(
+                        callback=consumer_instance.consume,
+                        no_ack=True,
+                    )
 
-    message_pump_greenlet = gevent.Greenlet(
-        message_pump_greenthread, conn)
+                    if queue.name in message.body.decode():
+                        break
 
-    return message_pump_greenlet
