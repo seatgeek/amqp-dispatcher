@@ -184,7 +184,7 @@ async def consumption_coroutine(consumer_pool: asyncio.Queue, amqp_proxy: AMQPPr
         await consumer_pool.put(consumer_instance)
 
 
-async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any],
+async def create_consumption_task(connection: Connection, consumer: Any,
                                   connection_name: str):
     """
     A consumption task fulfills a specification for a consumer entry in the
@@ -209,11 +209,19 @@ async def create_consumption_task(connection: Connection, consumer: Any, created
     # Consumers can use the AMQP proxy to publish messages. This
     # is a dedicated channel for that purpose
     publish_channel: Channel = await connection.channel()
-    queue: Queue = created_queues[queue_name]
 
+    # We should have one queue for each group of channels.
+    consume_channel: Channel = await connection.channel()
+    await consume_channel.set_qos(prefetch_count=prefetch_count)
+    queue = Queue(
+        connection=connection,
+        channel=consume_channel,
+        name=queue_name
+    )
+
+    # Create a pool of consumers that can be used to
+    # process incoming messages
     consumer_pool = asyncio.Queue(maxsize=consumer_count)
-
-    # Create a pool of consumers
     for i in range(0, consumer_count):
         await consumer_pool.put(consumer_class())
 
@@ -267,27 +275,22 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
     full_url = os.getenv('RABBITMQ_URL',
                          'amqp://guest:guest@localhost:5672/')
 
-    connection: RobustConnection = await aio_pika.connect_robust(
-        full_url, loop=loop, client_properties={
-            "connection_name": connection_name
-        }, connection_name=connection_name
-    )
+    connection: RobustConnection = await aio_pika.connect_robust(full_url, loop=loop)
 
     if connection is None:
         logger.warning("No connection -- returning")
         return
 
     queues = config.get('queues')
-    created_queues: Dict[str, Queue] = {}
     if queues:
-        created_queues = await create_and_bind_queues(connection, queues)
+        await create_and_bind_queues(connection, queues)
 
     connection.add_close_callback(create_connection_closed_cb())
 
     consumer_tasks = []
     for consumer in config.get('consumers', []):
         consumer_tasks.append(
-            create_consumption_task(connection, consumer, created_queues, connection_name)
+            create_consumption_task(connection, consumer, connection_name)
         )
 
     await asyncio.gather(*consumer_tasks)

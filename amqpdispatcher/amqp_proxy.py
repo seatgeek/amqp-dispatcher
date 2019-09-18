@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-import logging
 from typing import Dict, Any
 
 from aio_pika import Channel, Exchange, Connection
@@ -11,14 +10,14 @@ from amqpdispatcher.message import Message
 
 class AMQPProxy(object):
     _connection: Connection
-    _channel: Channel
+    _publish_channel: Channel
     _terminal_state: bool
     _msg: Message
     _exchanges: Dict[str, Exchange]
 
     def __init__(self, msg: Message, connection: Connection, channel: Channel):
         self._msg = msg
-        self._channel = channel
+        self._publish_channel = channel
         self._connection = connection
         self._terminal_state = False
         self._exchanges = {}
@@ -45,7 +44,7 @@ class AMQPProxy(object):
         else:
             exchange = Exchange(name=exchange,
                                 connection=self._connection,
-                                channel=self._channel.channel,
+                                channel=self._publish_channel.channel,
                                 auto_delete=None,
                                 durable=None,
                                 internal=None,
