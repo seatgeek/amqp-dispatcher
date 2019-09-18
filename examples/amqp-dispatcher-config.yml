@@ -35,6 +35,6 @@ consumers:
     queue: test_queue
     prefetch_count: 2
   - consumer: examples.example_secondary_consumer:SecondaryConsumer
-    consumer_count: 2
+    consumer_count: 3
     queue: second_test_queue
-    prefetch_count: 2
+    prefetch_count: 4
