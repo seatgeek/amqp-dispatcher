@@ -243,7 +243,7 @@ async def create_consumption_task(connection: Connection, consumer: Any,
             logger.info("a message was received with delivery tag: {0}".format(processed_message.delivery_tag))
 
             wrapped_message = Message(processed_message)
-            amqp_proxy = AMQPProxy(wrapped_message, connection, publish_channel)
+            amqp_proxy = AMQPProxy(connection, publish_channel, wrapped_message)
 
             # We do not want the processing of a single message to block other available
             # consumers in the pool from being able to process other incoming messages.

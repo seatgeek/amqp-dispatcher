@@ -1,6 +1,7 @@
+aio-pika==6.1.2
 coverage
 mock
-nose
 pika==1.1.0
+pytest-asyncio==0.10.0
+pytest==5.1.2
 pyyaml
-aio-pika==6.1.2

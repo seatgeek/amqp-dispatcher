@@ -12,11 +12,11 @@ class AMQPProxy(object):
     _connection: Connection
     _publish_channel: Channel
     _terminal_state: bool
-    _msg: Message
+    _message: Message
     _exchanges: Dict[str, Exchange]
 
-    def __init__(self, msg: Message, connection: Connection, channel: Channel):
-        self._msg = msg
+    def __init__(self, connection: Connection, channel: Channel, message: Message):
+        self._message = message
         self._publish_channel = channel
         self._connection = connection
         self._terminal_state = False
@@ -28,15 +28,16 @@ class AMQPProxy(object):
 
     async def ack(self):
         self._error_if_already_terminated()
-        await self._msg.raw_message.ack()
+        print(self._message.raw_message)
+        await self._message.raw_message.ack()
 
     async def nack(self):
         self._error_if_already_terminated()
-        await self._msg.raw_message.nack()
+        await self._message.raw_message.nack()
 
     async def reject(self, requeue=True):
         self._error_if_already_terminated()
-        await self._msg.raw_message.reject(requeue=requeue)
+        await self._message.raw_message.reject(requeue=requeue)
 
     async def publish(self, exchange: str, routing_key: str, headers: Dict[Any, Any], body: bytes):
         if self._exchanges.get(exchange):
