@@ -14,12 +14,10 @@ import logging
 import os
 import random
 import string
-import socket
 import yaml
 
 import six
 from aio_pika import Queue, Channel, RobustConnection, IncomingMessage, Connection
-from six.moves.urllib.parse import urlparse
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.environment import Environment
@@ -73,6 +71,7 @@ def create_connection_closed_cb():
     def connection_closed_cb():
         logger = logging.getLogger('amqp-dispatcher')
         logger.info("AMQP broker connection closed; close-info")
+
     return connection_closed_cb
 
 
@@ -111,7 +110,8 @@ async def create_queue(channel: Channel, queue) -> Queue:
         arguments=arguments
     )
     log_message = "Queue {0} - {1} messages and {1} consumers connected"
-    logger.info(log_message.format(queue.name, queue.declaration_result.message_count, queue.declaration_result.consumer_count))
+    logger.info(
+        log_message.format(queue.name, queue.declaration_result.message_count, queue.declaration_result.consumer_count))
 
     return queue
 
@@ -131,10 +131,12 @@ async def bind_queue(created_queue: Queue, queue_spec) -> None:
         await created_queue.bind(exchange, key)
 
 
-async def create_and_bind_queues(channel: Channel, queues):
+async def create_and_bind_queues(connection: Connection, queues):
     created_queues: Dict[str, Queue] = {}
 
     for queue in queues:
+        # We create one connection for each queue
+        channel = await connection.channel()
         created_queue = await create_queue(channel, queue)
         created_queues[queue['queue']] = created_queue
         await bind_queue(created_queue, queue)
@@ -158,58 +160,89 @@ def load_module_object(module_object_str):
     return getattr(module, obj_name)
 
 
-async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any], connection_name: str):
+async def consumption_coroutine(consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message):
+    logger = logging.getLogger('amqp-dispatcher')
+
+    # Block until we get a free consumer instance
+    consumer_instance = await consumer_pool.get()
+
+    try:
+        logger.info("Consumption Coroutine: consuming message")
+        await consumer_instance.consume(amqp_proxy, wrapped_message)
+
+        if not amqp_proxy.has_responded_to_message:
+            await amqp_proxy.ack()
+
+    except Exception as e:
+        logger.error("Consumption Coroutine: consuming message error: {0}".format(e))
+        await consumer_instance.shutdown(e)
+
+        if not amqp_proxy.has_responded_to_message:
+            await amqp_proxy.reject(requeue=True)
+
+    finally:
+        await consumer_pool.put(consumer_instance)
+
+
+async def create_consumption_task(connection: Connection, consumer: Any, created_queues: Dict[str, Any],
+                                  connection_name: str):
+    """
+    A consumption task fulfills a specification for a consumer entry in the
+    consumers section of the YAML. Note that a consumption task may specify that
+    multiple consumers be used. The consumer pool is handled by the
+    consumer loop.
+    :param connection:
+    :param consumer:
+    :param created_queues:
+    :param connection_name:
+    :return:
+    """
     logger = logging.getLogger('amqp-dispatcher')
 
     queue_name = consumer['queue']
     prefetch_count = consumer.get('prefetch_count', 1)
     consumer_str = consumer.get('consumer')
-    # consumer_count = consumer.get('consumer_count', 1)
+    consumer_count = consumer.get('consumer_count', 1)
 
     consumer_class = load_consumer(consumer_str)
 
-    consume_channel: Channel = await connection.channel()
+    # Consumers can use the AMQP proxy to publish messages. This
+    # is a dedicated channel for that purpose
     publish_channel: Channel = await connection.channel()
+    queue: Queue = created_queues[queue_name]
 
-    await consume_channel.set_qos(prefetch_count=prefetch_count)
+    consumer_pool = asyncio.Queue(maxsize=consumer_count)
 
-    queue = created_queues[queue_name]
+    # Create a pool of consumers
+    for i in range(0, consumer_count):
+        await consumer_pool.put(consumer_class())
+
     random_generator = random.SystemRandom()
-
     random_string = ''.join([
-        random_generator.choice(string.ascii_lowercase) for i in range(10)
+        random_generator.choice(string.ascii_lowercase) for _ in range(10)
     ])
 
-    async with queue.iterator(consumer_tag="{0} [{1}] {2}".format(connection_name, consumer_str, random_string)) as queue_iter:
-        consumer_instance = consumer_class()
-        async for message in queue_iter:
-            # ignore_processed=True allows us to manually ack
-            # and reject the message without
-            # the context manager making the decisions for us.
-            async with message.process(ignore_processed=True):
-                processed_message: IncomingMessage = message
-                logger.info("a message was received, delivery tag: {0}".format(processed_message.delivery_tag))
+    async with queue.iterator(consumer_tag="{0} [{1}] {2}".format(connection_name, consumer_str, random_string)) as queue_iterator:
+        async for message in queue_iterator:
+            # ignore_processed=True allows us to manually acknowledge
+            # and reject messages without the context manager
+            # making the decisions for us.
+            processed_message: IncomingMessage = message
+            logger.info("a message was received with delivery tag: {0}".format(processed_message.delivery_tag))
 
-                wrapped_message = Message(processed_message)
-                amqp_proxy = AMQPProxy(wrapped_message, connection, publish_channel)
+            wrapped_message = Message(processed_message)
+            amqp_proxy = AMQPProxy(wrapped_message, connection, publish_channel)
 
-                try:
-                    logger.info("consuming message")
-                    await consumer_instance.consume(amqp_proxy, wrapped_message)
-
-                    if not amqp_proxy.has_responded_to_message:
-                        await amqp_proxy.ack()
-
-                except Exception as e:
-                    logger.error("consuming message error: {0}".format(e))
-                    await consumer_instance.shutdown(e)
-
-                    if not amqp_proxy.has_responded_to_message:
-                        await amqp_proxy.reject(requeue=True)
-
-
-def extract_environment():
-    pass
+            # We do not want the processing of a single message to block other available
+            # consumers in the pool from being able to process other incoming messages.
+            # Therefore, we schedule this without blocking control flow.
+            # The consumption coroutine is responsible for putting the
+            # consumer instance back on the queue when it is done.
+            asyncio.ensure_future(consumption_coroutine(
+                consumer_pool,
+                amqp_proxy,
+                wrapped_message
+            ))
 
 
 async def initialize_dispatcher(loop: AbstractEventLoop):
@@ -244,11 +277,10 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         logger.warning("No connection -- returning")
         return
 
-    channel = await connection.channel()
     queues = config.get('queues')
     created_queues: Dict[str, Queue] = {}
     if queues:
-        created_queues = await create_and_bind_queues(channel, queues)
+        created_queues = await create_and_bind_queues(connection, queues)
 
     connection.add_close_callback(create_connection_closed_cb())
 

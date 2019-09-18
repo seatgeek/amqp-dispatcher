@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import random
 import traceback
@@ -16,9 +17,10 @@ class SecondaryConsumer(object):
 
         val = random.random()
         await amqp.publish('amq.direct', 'dead_rk', {}, b'New body!')
-        if val < .2:
-            raise ValueError()
-        logger.debug('Done sleeping')
+        # if val < .2:
+        #     raise ValueError()
+        await asyncio.sleep(8)
+        logger.debug('Done secondary sleeping')
         await amqp.ack()
 
     async def shutdown(self, exception=None):

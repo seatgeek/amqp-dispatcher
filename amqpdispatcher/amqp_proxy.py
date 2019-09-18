@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
+import logging
 from typing import Dict, Any
 
 from aio_pika import Channel, Exchange, Connection
