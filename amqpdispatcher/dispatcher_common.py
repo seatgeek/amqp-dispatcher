@@ -131,12 +131,11 @@ async def bind_queue(created_queue: Queue, queue_spec) -> None:
         await created_queue.bind(exchange, key)
 
 
-async def create_and_bind_queues(connection: Connection, queues):
+async def create_and_bind_queues(channel: Channel, queues):
     created_queues: Dict[str, Queue] = {}
 
     for queue in queues:
         # We create one connection for each queue
-        channel = await connection.channel()
         created_queue = await create_queue(channel, queue)
         created_queues[queue['queue']] = created_queue
         await bind_queue(created_queue, queue)
@@ -210,13 +209,17 @@ async def create_consumption_task(connection: Connection, consumer: Any,
     # is a dedicated channel for that purpose
     publish_channel: Channel = await connection.channel()
 
-    # We should have one queue for each group of channels.
+    # We should have one channel for each group of consumers.
     consume_channel: Channel = await connection.channel()
     await consume_channel.set_qos(prefetch_count=prefetch_count)
     queue = Queue(
         connection=connection,
-        channel=consume_channel,
-        name=queue_name
+        channel=consume_channel.channel,
+        name=queue_name,
+        durable=None,
+        exclusive=None,
+        auto_delete=None,
+        arguments=None
     )
 
     # Create a pool of consumers that can be used to
@@ -229,8 +232,9 @@ async def create_consumption_task(connection: Connection, consumer: Any,
     random_string = ''.join([
         random_generator.choice(string.ascii_lowercase) for _ in range(10)
     ])
+    consumer_tag = "{0} [{1}] {2}".format(connection_name, consumer_str, random_string)
 
-    async with queue.iterator(consumer_tag="{0} [{1}] {2}".format(connection_name, consumer_str, random_string)) as queue_iterator:
+    async with queue.iterator(consumer_tag=consumer_tag) as queue_iterator:
         async for message in queue_iterator:
             # ignore_processed=True allows us to manually acknowledge
             # and reject messages without the context manager
@@ -283,7 +287,9 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
 
     queues = config.get('queues')
     if queues:
-        await create_and_bind_queues(connection, queues)
+        channel = await connection.channel()
+        await create_and_bind_queues(channel, queues)
+        await channel.close()
 
     connection.add_close_callback(create_connection_closed_cb())
 
