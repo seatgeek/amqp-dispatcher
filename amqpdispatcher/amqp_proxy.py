@@ -39,23 +39,27 @@ class AMQPProxy(object):
         self._error_if_already_terminated()
         await self._message.raw_message.reject(requeue=requeue)
 
-    async def publish(self, exchange: str, routing_key: str, headers: Dict[Any, Any], body: bytes):
+    async def publish(
+        self, exchange: str, routing_key: str, headers: Dict[Any, Any], body: bytes
+    ):
         if self._exchanges.get(exchange):
             exchange = self._exchanges.get(exchange)
         else:
-            exchange = Exchange(name=exchange,
-                                connection=self._connection,
-                                channel=self._publish_channel.channel,
-                                auto_delete=None,
-                                durable=None,
-                                internal=None,
-                                passive=None)
+            exchange = Exchange(
+                name=exchange,
+                connection=self._connection,
+                channel=self._publish_channel.channel,
+                auto_delete=None,
+                durable=None,
+                internal=None,
+                passive=None,
+            )
 
         message = AioPikaMessage(body=body, headers=headers)
         await exchange.publish(message, routing_key)
 
     def _error_if_already_terminated(self):
         if self._terminal_state:
-            raise Exception('Already responded to message!')
+            raise Exception("Already responded to message!")
         else:
             self._terminal_state = True

@@ -33,35 +33,41 @@ class DispatcherConsumer(Protocol):
 
 
 def get_args_from_cli():
-    parser = argparse.ArgumentParser(description='Run Graphite Pager')
-    parser.add_argument('--config',
-                        metavar='config',
-                        type=str,
-                        default='config.yml',
-                        help='path to the config file')
+    parser = argparse.ArgumentParser(description="Run Graphite Pager")
+    parser.add_argument(
+        "--config",
+        metavar="config",
+        type=str,
+        default="config.yml",
+        help="path to the config file",
+    )
 
-    parser.add_argument('--connection',
-                        metavar='connection',
-                        type=str,
-                        default=('haigha' if six.PY2 else 'pika'),
-                        choices=['haigha', 'pika'] if six.PY2 else ['pika'],
-                        help='type of connection to use')
+    parser.add_argument(
+        "--connection",
+        metavar="connection",
+        type=str,
+        default=("haigha" if six.PY2 else "pika"),
+        choices=["haigha", "pika"] if six.PY2 else ["pika"],
+        help="type of connection to use",
+    )
 
-    parser.add_argument('--validate',
-                        dest='validate',
-                        action='store_true',
-                        default=False,
-                        help='validate the config.yml file')
+    parser.add_argument(
+        "--validate",
+        dest="validate",
+        action="store_true",
+        default=False,
+        help="validate the config.yml file",
+    )
     args = parser.parse_args()
     return args
 
 
 def channel_closed_cb(ch, reply_code=None, reply_text=None):
-    info = '[{0}] {1}'.format(reply_code, reply_text)
+    info = "[{0}] {1}".format(reply_code, reply_text)
     if reply_text is None:
         info = ch.close_info
 
-    logger = logging.getLogger('amqp-dispatcher')
+    logger = logging.getLogger("amqp-dispatcher")
     logger.info("AMQP channel closed; close-info: {0}".format(info))
     ch = None
     return
@@ -69,7 +75,7 @@ def channel_closed_cb(ch, reply_code=None, reply_text=None):
 
 def create_connection_closed_cb():
     def connection_closed_cb():
-        logger = logging.getLogger('amqp-dispatcher')
+        logger = logging.getLogger("amqp-dispatcher")
         logger.info("AMQP broker connection closed; close-info")
 
     return connection_closed_cb
@@ -77,26 +83,26 @@ def create_connection_closed_cb():
 
 async def create_queue(channel: Channel, queue) -> Queue:
     """creates a queue synchronously"""
-    logger = logging.getLogger('amqp-dispatcher')
-    name = queue['queue']
+    logger = logging.getLogger("amqp-dispatcher")
+    name = queue["queue"]
     logger.info("Create queue {0}".format(name))
-    durable = bool(queue.get('durable', True))
-    auto_delete = bool(queue.get('auto_delete', False))
-    exclusive = bool(queue.get('exclusive', False))
+    durable = bool(queue.get("durable", True))
+    auto_delete = bool(queue.get("auto_delete", False))
+    exclusive = bool(queue.get("exclusive", False))
 
     passive = False
 
     arguments = {}
     queue_args = [
-        'x_dead_letter_exchange',
-        'x_dead_letter_routing_key',
-        'x_max_length',
-        'x_expires',
-        'x_message_ttl',
+        "x_dead_letter_exchange",
+        "x_dead_letter_routing_key",
+        "x_max_length",
+        "x_expires",
+        "x_message_ttl",
     ]
 
     for queue_arg in queue_args:
-        key = queue_arg.replace('_', '-')
+        key = queue_arg.replace("_", "-")
         if queue.get(queue_arg):
             arguments[key] = queue.get(queue_arg)
 
@@ -107,25 +113,30 @@ async def create_queue(channel: Channel, queue) -> Queue:
         durable=durable,
         auto_delete=auto_delete,
         # nowait=nowait,
-        arguments=arguments
+        arguments=arguments,
     )
     log_message = "Queue {0} - {1} messages and {1} consumers connected"
     logger.info(
-        log_message.format(queue.name, queue.declaration_result.message_count, queue.declaration_result.consumer_count))
+        log_message.format(
+            queue.name,
+            queue.declaration_result.message_count,
+            queue.declaration_result.consumer_count,
+        )
+    )
 
     return queue
 
 
 async def bind_queue(created_queue: Queue, queue_spec) -> None:
     """binds a queue to the bindings identified in the doc"""
-    logger = logging.getLogger('amqp-dispatcher')
+    logger = logging.getLogger("amqp-dispatcher")
     logger.debug("Binding queue {0}".format(queue_spec))
-    bindings = queue_spec.get('bindings')
+    bindings = queue_spec.get("bindings")
 
-    name = queue_spec.get('queue')
+    name = queue_spec.get("queue")
     for binding in bindings:
-        exchange = binding['exchange']
-        key = binding['routing_key']
+        exchange = binding["exchange"]
+        key = binding["routing_key"]
         logger.info("bind {0} to {1}:{2}".format(name, exchange, key))
 
         await created_queue.bind(exchange, key)
@@ -137,7 +148,7 @@ async def create_and_bind_queues(channel: Channel, queues):
     for queue in queues:
         # We create one connection for each queue
         created_queue = await create_queue(channel, queue)
-        created_queues[queue['queue']] = created_queue
+        created_queues[queue["queue"]] = created_queue
         await bind_queue(created_queue, queue)
 
     return created_queues
@@ -148,19 +159,21 @@ def load_module(module_name: str) -> types.ModuleType:
 
 
 def load_consumer(consumer_str: str) -> Type[DispatcherConsumer]:
-    logger = logging.getLogger('amqp-dispatcher')
-    logger.debug('Loading consumer {0}'.format(consumer_str))
+    logger = logging.getLogger("amqp-dispatcher")
+    logger.debug("Loading consumer {0}".format(consumer_str))
     return load_module_object(consumer_str)
 
 
 def load_module_object(module_object_str):
-    module_name, obj_name = module_object_str.split(':')
+    module_name, obj_name = module_object_str.split(":")
     module = load_module(module_name)
     return getattr(module, obj_name)
 
 
-async def consumption_coroutine(consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message):
-    logger = logging.getLogger('amqp-dispatcher')
+async def consumption_coroutine(
+    consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message
+):
+    logger = logging.getLogger("amqp-dispatcher")
 
     # Block until we get a free consumer instance
     consumer_instance = await consumer_pool.get()
@@ -183,8 +196,9 @@ async def consumption_coroutine(consumer_pool: asyncio.Queue, amqp_proxy: AMQPPr
         await consumer_pool.put(consumer_instance)
 
 
-async def create_consumption_task(connection: Connection, consumer: Any,
-                                  connection_name: str):
+async def create_consumption_task(
+    connection: Connection, consumer: Any, connection_name: str
+):
     """
     A consumption task fulfills a specification for a consumer entry in the
     consumers section of the YAML. Note that a consumption task may specify that
@@ -196,12 +210,12 @@ async def create_consumption_task(connection: Connection, consumer: Any,
     :param connection_name:
     :return:
     """
-    logger = logging.getLogger('amqp-dispatcher')
+    logger = logging.getLogger("amqp-dispatcher")
 
-    queue_name = consumer['queue']
-    prefetch_count = consumer.get('prefetch_count', 1)
-    consumer_str = consumer.get('consumer')
-    consumer_count = consumer.get('consumer_count', 1)
+    queue_name = consumer["queue"]
+    prefetch_count = consumer.get("prefetch_count", 1)
+    consumer_str = consumer.get("consumer")
+    consumer_count = consumer.get("consumer_count", 1)
 
     consumer_class = load_consumer(consumer_str)
 
@@ -219,7 +233,7 @@ async def create_consumption_task(connection: Connection, consumer: Any,
         durable=None,
         exclusive=None,
         auto_delete=None,
-        arguments=None
+        arguments=None,
     )
 
     # Create a pool of consumers that can be used to
@@ -229,9 +243,9 @@ async def create_consumption_task(connection: Connection, consumer: Any,
         await consumer_pool.put(consumer_class())
 
     random_generator = random.SystemRandom()
-    random_string = ''.join([
-        random_generator.choice(string.ascii_lowercase) for _ in range(10)
-    ])
+    random_string = "".join(
+        [random_generator.choice(string.ascii_lowercase) for _ in range(10)]
+    )
     consumer_tag = "{0} [{1}] {2}".format(connection_name, consumer_str, random_string)
 
     async with queue.iterator(consumer_tag=consumer_tag) as queue_iterator:
@@ -240,7 +254,11 @@ async def create_consumption_task(connection: Connection, consumer: Any,
             # and reject messages without the context manager
             # making the decisions for us.
             processed_message: IncomingMessage = message
-            logger.info("a message was received with delivery tag: {0}".format(processed_message.delivery_tag))
+            logger.info(
+                "a message was received with delivery tag: {0}".format(
+                    processed_message.delivery_tag
+                )
+            )
 
             wrapped_message = Message(processed_message)
             amqp_proxy = AMQPProxy(connection, publish_channel, wrapped_message)
@@ -250,34 +268,30 @@ async def create_consumption_task(connection: Connection, consumer: Any,
             # Therefore, we schedule this without blocking control flow.
             # The consumption coroutine is responsible for putting the
             # consumer instance back on the queue when it is done.
-            asyncio.ensure_future(consumption_coroutine(
-                consumer_pool,
-                amqp_proxy,
-                wrapped_message
-            ))
+            asyncio.ensure_future(
+                consumption_coroutine(consumer_pool, amqp_proxy, wrapped_message)
+            )
 
 
 async def initialize_dispatcher(loop: AbstractEventLoop):
-    logger = logging.getLogger('amqp-dispatcher')
+    logger = logging.getLogger("amqp-dispatcher")
 
     args = get_args_from_cli()
     config = yaml.safe_load(open(args.config).read())
 
-    startup_handler_str = config.get('startup_handler')
+    startup_handler_str = config.get("startup_handler")
     if startup_handler_str is not None:
         startup_handler = load_module_object(startup_handler_str)
         startup_handler()
-        logger.info('Startup handled')
+        logger.info("Startup handled")
 
     environment = Environment.create()
 
-    connection_name = '{0}.{1}'.format(
-        environment.nomad_job_name,
-        environment.nomad_alloc_id,
+    connection_name = "{0}.{1}".format(
+        environment.nomad_job_name, environment.nomad_alloc_id
     )
 
-    full_url = os.getenv('RABBITMQ_URL',
-                         'amqp://guest:guest@localhost:5672/')
+    full_url = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
 
     connection: RobustConnection = await aio_pika.connect_robust(full_url, loop=loop)
 
@@ -285,7 +299,7 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         logger.warning("No connection -- returning")
         return
 
-    queues = config.get('queues')
+    queues = config.get("queues")
     if queues:
         channel = await connection.channel()
         await create_and_bind_queues(channel, queues)
@@ -294,7 +308,7 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
     connection.add_close_callback(create_connection_closed_cb())
 
     consumer_tasks = []
-    for consumer in config.get('consumers', []):
+    for consumer in config.get("consumers", []):
         consumer_tasks.append(
             create_consumption_task(connection, consumer, connection_name)
         )

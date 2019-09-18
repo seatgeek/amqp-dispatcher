@@ -7,13 +7,13 @@ from mock import MagicMock
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 
-TERMINALS = ['ack', 'nack', 'reject']
+TERMINALS = ["ack", "nack", "reject"]
 
 
 def create_mocks():
-    connection = MagicMock(name='connection')
-    channel = MagicMock(name='channel')
-    message = MagicMock(name='message')
+    connection = MagicMock(name="connection")
+    channel = MagicMock(name="channel")
+    message = MagicMock(name="message")
     f = Future()
     f.set_result(None)
     message.raw_message.ack.return_value = f
