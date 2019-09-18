@@ -1,4 +1,5 @@
 aio-pika==6.1.2
+black==19.3b0
 coverage
 mock
 pika==1.1.0
