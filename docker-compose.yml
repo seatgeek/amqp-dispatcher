@@ -9,7 +9,15 @@ services:
     environment:
       NOMAD_ALLOC_ID: 17
       NOMAD_JOB_NAME: 2000
+      RABBITMQ_URL: amqp://guest:guest@toxiproxy:25672/
   rabbit:
     ports:
       - "15673:15672"
     image: rabbitmq:management-alpine
+  toxiproxy:
+    volumes:
+      - ./config:/config
+    command: -config /config/toxiproxy.json
+    image: shopify/toxiproxy
+    depends_on:
+      - rabbit
