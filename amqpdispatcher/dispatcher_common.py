@@ -200,15 +200,17 @@ async def consumption_coroutine(
         await consumer_instance.shutdown(e)
 
         if not amqp_proxy.has_responded_to_message:
-            await amqp_proxy.reject(requeue=True)
-
+            try:
+                await amqp_proxy.reject(requeue=True)
+            except Exception as e:
+                logger.error("Rejection Error: {0}. Aborting.".format(e))
     finally:
         await consumer_pool.put(consumer_instance)
         wait_group.done()
 
 
 async def create_consumption_task(
-    connection: TrulyRobustConnection, consumer: Any, connection_name: str
+    connection: TrulyRobustConnection, consumer: Dict[Any, Any], connection_name: str
 ):
     """
     A consumption task fulfills a specification for a consumer entry in the

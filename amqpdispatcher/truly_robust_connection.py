@@ -4,7 +4,7 @@ from typing import Callable, Set
 
 from aio_pika import Connection, RobustChannel, Channel
 from aio_pika.exceptions import CONNECTION_EXCEPTIONS
-from aio_pika.tools import CallbackCollection, log
+from aio_pika.tools import CallbackCollection
 from aio_pika.types import TimeoutType
 from aiormq.connection import parse_int, parse_bool
 
