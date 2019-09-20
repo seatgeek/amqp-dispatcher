@@ -11,17 +11,18 @@ from typing_extensions import Protocol
 import aio_pika
 import importlib
 import logging
-import os
 import random
 import string
 import yaml
 
 import six
-from aio_pika import Queue, Channel, RobustConnection, IncomingMessage, Connection
+from aio_pika import Queue, Channel, IncomingMessage
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.environment import Environment
 from amqpdispatcher.message import Message
+from amqpdispatcher.truly_robust_connection import TrulyRobustConnection
+from amqpdispatcher.wait_group import WaitGroup
 
 
 class DispatcherConsumer(Protocol):
@@ -74,11 +75,19 @@ def channel_closed_cb(ch, reply_code=None, reply_text=None):
 
 
 def create_connection_closed_cb():
-    def connection_closed_cb():
+    def connection_closed_cb(*args, **kwargs):
         logger = logging.getLogger("amqp-dispatcher")
         logger.info("AMQP broker connection closed; close-info")
 
     return connection_closed_cb
+
+
+def create_reconnection_callback():
+    def reconnect_callback(*args, **kwargs):
+        logger = logging.getLogger("amqp-dispatcher")
+        logger.info("AMQP broker reconnected!; close-info")
+
+    return reconnect_callback
 
 
 async def create_queue(channel: Channel, queue) -> Queue:
@@ -171,7 +180,7 @@ def load_module_object(module_object_str):
 
 
 async def consumption_coroutine(
-    consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message
+    consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message, wait_group: WaitGroup
 ):
     logger = logging.getLogger("amqp-dispatcher")
 
@@ -180,6 +189,7 @@ async def consumption_coroutine(
 
     try:
         logger.info("Consumption Coroutine: consuming message")
+        wait_group.add()
         await consumer_instance.consume(amqp_proxy, wrapped_message)
 
         if not amqp_proxy.has_responded_to_message:
@@ -194,10 +204,11 @@ async def consumption_coroutine(
 
     finally:
         await consumer_pool.put(consumer_instance)
+        wait_group.done()
 
 
 async def create_consumption_task(
-    connection: Connection, consumer: Any, connection_name: str
+    connection: TrulyRobustConnection, consumer: Any, connection_name: str
 ):
     """
     A consumption task fulfills a specification for a consumer entry in the
@@ -269,8 +280,21 @@ async def create_consumption_task(
             # The consumption coroutine is responsible for putting the
             # consumer instance back on the queue when it is done.
             asyncio.ensure_future(
-                consumption_coroutine(consumer_pool, amqp_proxy, wrapped_message)
+                consumption_coroutine(consumer_pool, amqp_proxy, wrapped_message, connection.consumer_completion_group)
             )
+
+
+def create_begin_consumption_task(config: Dict[Any, Any], connection: TrulyRobustConnection, connection_name: str):
+    async def begin_consumption_task():
+        consumer_tasks = []
+        for consumer in config.get("consumers", []):
+            consumer_tasks.append(
+                create_consumption_task(connection, consumer, connection_name)
+            )
+
+        await asyncio.gather(*consumer_tasks)
+
+    return begin_consumption_task
 
 
 async def initialize_dispatcher(loop: AbstractEventLoop):
@@ -291,26 +315,21 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         environment.nomad_job_name, environment.nomad_alloc_id
     )
 
-    full_url = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
-
-    connection: RobustConnection = await aio_pika.connect_robust(full_url, loop=loop)
-
+    connection: TrulyRobustConnection = await aio_pika.connect(environment.rabbit_url, loop=loop, connection_class=TrulyRobustConnection)
     if connection is None:
-        logger.warning("No connection -- returning")
+        logger.warning("Unable to establish connection -- returning")
         return
 
-    queues = config.get("queues")
-    if queues:
-        channel = await connection.channel()
-        await create_and_bind_queues(channel, queues)
-        await channel.close()
+    async with connection:
+        queues = config.get("queues")
+        if queues:
+            channel = await connection.channel()
+            await create_and_bind_queues(channel, queues)
+            await channel.close()
 
-    connection.add_close_callback(create_connection_closed_cb())
+        connection.add_close_callback(create_connection_closed_cb())
 
-    consumer_tasks = []
-    for consumer in config.get("consumers", []):
-        consumer_tasks.append(
-            create_consumption_task(connection, consumer, connection_name)
-        )
+        consumption_task = create_begin_consumption_task(config, connection, connection_name)
+        connection.set_reconnect_task(consumption_task)
 
-    await asyncio.gather(*consumer_tasks)
+        await consumption_task()
