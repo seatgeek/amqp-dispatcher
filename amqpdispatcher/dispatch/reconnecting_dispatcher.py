@@ -7,13 +7,18 @@ from pika import SelectConnection
 from pika.connection import Connection
 
 
-class Dispatcher():
+class Dispatcher:
     _connection: Connection
 
     def __init__(self, configuration: Dict[Any, Any], url: str):
         self._url = url
 
-    def connect(self, on_connection_closed: Optional[Callable[[SelectConnection, Exception], None]] = None) -> Awaitable[SelectConnection]:
+    def connect(
+        self,
+        on_connection_closed: Optional[
+            Callable[[SelectConnection, Exception], None]
+        ] = None,
+    ) -> Awaitable[SelectConnection]:
         logger = logging.getLogger("amqp-dispatcher")
         connect_open = Future()
 
@@ -21,7 +26,9 @@ class Dispatcher():
             logger.info("connection opened within connection")
             connect_open.set_result(unused_connection)
 
-        def on_connection_open_error(unused_connection: SelectConnection, error: Exception):
+        def on_connection_open_error(
+            unused_connection: SelectConnection, error: Exception
+        ):
             logger.info("connection errored within connection")
             connect_open.set_exception(error)
 
@@ -29,7 +36,8 @@ class Dispatcher():
             parameters=pika.URLParameters(self._url),
             on_open_callback=on_connection_open,
             on_open_error_callback=on_connection_open_error,
-            on_close_callback=on_connection_closed)
+            on_close_callback=on_connection_closed,
+        )
 
         connection.ioloop.start()
 

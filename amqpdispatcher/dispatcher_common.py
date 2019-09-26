@@ -180,7 +180,10 @@ def load_module_object(module_object_str):
 
 
 async def consumption_coroutine(
-    consumer_pool: asyncio.Queue, amqp_proxy: AMQPProxy, wrapped_message: Message, wait_group: WaitGroup
+    consumer_pool: asyncio.Queue,
+    amqp_proxy: AMQPProxy,
+    wrapped_message: Message,
+    wait_group: WaitGroup,
 ):
     logger = logging.getLogger("amqp-dispatcher")
 
@@ -282,11 +285,18 @@ async def create_consumption_task(
             # The consumption coroutine is responsible for putting the
             # consumer instance back on the queue when it is done.
             asyncio.ensure_future(
-                consumption_coroutine(consumer_pool, amqp_proxy, wrapped_message, connection.consumer_completion_group)
+                consumption_coroutine(
+                    consumer_pool,
+                    amqp_proxy,
+                    wrapped_message,
+                    connection.consumer_completion_group,
+                )
             )
 
 
-def create_begin_consumption_task(config: Dict[Any, Any], connection: TrulyRobustConnection, connection_name: str):
+def create_begin_consumption_task(
+    config: Dict[Any, Any], connection: TrulyRobustConnection, connection_name: str
+):
     async def begin_consumption_task():
         consumer_tasks = []
         for consumer in config.get("consumers", []):
@@ -317,7 +327,9 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         environment.nomad_job_name, environment.nomad_alloc_id
     )
 
-    connection: TrulyRobustConnection = await aio_pika.connect(environment.rabbit_url, loop=loop, connection_class=TrulyRobustConnection)
+    connection: TrulyRobustConnection = await aio_pika.connect(
+        environment.rabbit_url, loop=loop, connection_class=TrulyRobustConnection
+    )
     if connection is None:
         logger.warning("Unable to establish connection -- returning")
         return
@@ -331,7 +343,9 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
 
         connection.add_close_callback(create_connection_closed_cb())
 
-        consumption_task = create_begin_consumption_task(config, connection, connection_name)
+        consumption_task = create_begin_consumption_task(
+            config, connection, connection_name
+        )
         connection.set_reconnect_task(consumption_task)
 
         await consumption_task()

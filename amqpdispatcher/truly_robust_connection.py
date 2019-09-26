@@ -15,22 +15,21 @@ logger = logging.getLogger(__name__)
 
 class TrulyRobustConnection(Connection):
     """Truly Robust connection """
+
     consumer_completion_group: WaitGroup
     __channels: Set[Channel]
+    __reconnect_attempt: int
 
     CHANNEL_CLASS = RobustChannel
     KWARGS_TYPES = (
-        ('reconnect_interval', parse_int, '5'),
-        ('fail_fast', parse_bool, '1'),
+        ("reconnect_interval", parse_int, "5"),
+        ("fail_fast", parse_bool, "1"),
     )
 
     def __init__(self, url, loop=None, **kwargs):
-        super().__init__(
-            loop=loop or asyncio.get_event_loop(), url=url, **kwargs
-        )
+        super().__init__(loop=loop or asyncio.get_event_loop(), url=url, **kwargs)
 
-        self.reconnect_interval = self.kwargs['reconnect_interval']
-        self.fail_fast = self.kwargs['fail_fast']
+        self.fail_fast = self.kwargs["fail_fast"]
 
         self.consumer_completion_group = WaitGroup()
 
@@ -38,6 +37,7 @@ class TrulyRobustConnection(Connection):
         self._on_reconnect_callbacks = CallbackCollection()
         self._reconnect_task = None
         self._closed = False
+        self.__reconnect_attempt = 1
 
     @property
     def on_reconnect_callbacks(self) -> CallbackCollection:
@@ -47,20 +47,21 @@ class TrulyRobustConnection(Connection):
     def _channels(self) -> dict:
         return {ch.number: ch for ch in self.__channels}
 
+    @property
+    def reconnect_interval(self) -> int:
+        return min(2, 0.05 * pow(2, self.__reconnect_attempt))
+
     def _on_connection_close(self, connection, closing, *args, **kwargs):
         logger.warning("connection is closing!")
         self.connection = None
 
         # Have to remove non initialized channels
-        self.__channels = {
-            ch for ch in self.__channels if ch.number is not None
-        }
+        self.__channels = {ch for ch in self.__channels if ch.number is not None}
 
         super()._on_connection_close(connection, closing)
 
         self.loop.call_later(
-            self.reconnect_interval,
-            lambda: self.loop.create_task(self.reconnect())
+            self.reconnect_interval, lambda: self.loop.create_task(self.reconnect())
         )
 
     def add_reconnect_callback(self, callback: Callable[[], None]):
@@ -96,7 +97,7 @@ class TrulyRobustConnection(Connection):
                 await asyncio.sleep(self.reconnect_interval)
 
     async def reconnect(self):
-        logger.exception('Reconnection cycle beginning: {0}'.format(self.is_closed))
+        logger.exception("Reconnection cycle beginning: {0}".format(self.is_closed))
 
         # wait for all outstanding consumers to complete
         await self.consumer_completion_group.event.wait()
@@ -112,18 +113,23 @@ class TrulyRobustConnection(Connection):
         try:
             await super().connect()
         except CONNECTION_EXCEPTIONS:
-            logger.exception('Connection attempt error')
+            logger.exception("Connection attempt error")
+            self.__reconnect_attempt += 1
 
             self.loop.call_later(
-                self.reconnect_interval,
-                lambda: self.loop.create_task(self.reconnect())
+                self.reconnect_interval, lambda: self.loop.create_task(self.reconnect())
             )
         else:
+            # reset exponential backoff
+            self.__reconnect_attempt = 1
             await self._on_reconnect()
 
-    def channel(self, channel_number: int = None,
-                publisher_confirms: bool = True,
-                on_return_raises=False):
+    def channel(
+        self,
+        channel_number: int = None,
+        publisher_confirms: bool = True,
+        on_return_raises=False,
+    ):
         channel = super().channel(
             channel_number=channel_number,
             publisher_confirms=publisher_confirms,
@@ -139,7 +145,7 @@ class TrulyRobustConnection(Connection):
             try:
                 await channel.on_reconnect(self, number)
             except CONNECTION_EXCEPTIONS:
-                logger.exception('Open channel failure')
+                logger.exception("Open channel failure")
                 await self.close()
                 return
 

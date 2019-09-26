@@ -11,6 +11,7 @@ class SecondaryConsumer(object):
     This is an example of a consumer that does not try to do its own
     acknowledging or rejecting, but just does some work.
     """
+
     def __init__(self):
         logger.info("I've been secondarily initialized!")
 
