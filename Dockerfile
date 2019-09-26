@@ -13,5 +13,5 @@ COPY . .
 
 RUN pip install -r requirements.txt
 
-# We wait for Rabbit, but connect to Toxiproxy
-CMD dockerize -wait tcp://rabbit:5672 -timeout 15s python -m amqpdispatcher.dispatcher --config ./examples/amqp-dispatcher-config.yml
+
+ENTRYPOINT ["dockerize", "-wait", "tcp://rabbit:5672", "-timeout", "15s", "python", "-m", "amqpdispatcher.dispatcher", "--config", "./examples/amqp-dispatcher-config.yml"]

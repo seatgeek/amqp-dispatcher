@@ -166,4 +166,5 @@ class TrulyRobustConnection(Connection):
 
         if self.connection is None:
             return
+
         return await super().close(exc)

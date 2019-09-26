@@ -5,7 +5,6 @@ services:
 python:
   - "3.6"
 cache:
-  apt: true
   directories:
     - $HOME/.pip/download-cache
     - $HOME/.pip-accel
@@ -15,12 +14,16 @@ addons:
     packages:
         - libevent-dev
         - shelltestrunner
-
+        - dockerize
 # command to install dependencies
 install:
+  - wget https://github.com/jwilder/dockerize/releases/download/0.6.1/dockerize-linux-amd64-0.6.1.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-0.6.1.tar.gz \
+    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
   - pip install -r requirements-$TRAVIS_PYTHON_VERSION.txt
   - pip install -r requirements.txt
   - docker-compose build
-  - docker-compose up -d
 # command to run tests
-script: nosetests tests/unit
+script:
+  - nosetests tests/unit
+  - dockerize -wait tcp://localhost:5672 -timeout 25s echo "Waited"

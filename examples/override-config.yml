@@ -1,0 +1,36 @@
+
+startup_handler: examples.example_startup:startup
+
+queues:
+  - queue: test_queue
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: queue
+  - queue: second_test_queue
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: queue
+
+consumers:
+  - consumer: examples.example_consumer:Consumer
+    consumer_count: 1
+    queue: test_queue
+    prefetch_count: 2
