@@ -1,7 +1,8 @@
 sudo: false
 language: python
+services:
+  - docker
 python:
-  - "2.7"
   - "3.6"
 cache:
   apt: true
@@ -13,10 +14,13 @@ addons:
   apt:
     packages:
         - libevent-dev
+        - shelltestrunner
 
 # command to install dependencies
 install:
   - pip install -r requirements-$TRAVIS_PYTHON_VERSION.txt
   - pip install -r requirements.txt
+  - docker-compose build
+  - docker-compose up
 # command to run tests
-script: nosetests tests/unit tests/integration
+script: nosetests tests/unit
