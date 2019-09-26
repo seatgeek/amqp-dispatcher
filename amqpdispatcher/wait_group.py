@@ -7,6 +7,7 @@ class WaitGroup(object):
 
     def __init__(self):
         self.event = asyncio.Event()
+        self.event.set()
         self._count = 0
 
     def add(self):
