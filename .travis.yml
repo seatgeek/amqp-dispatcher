@@ -21,6 +21,6 @@ install:
   - pip install -r requirements-$TRAVIS_PYTHON_VERSION.txt
   - pip install -r requirements.txt
   - docker-compose build
-  - docker-compose up
+  - docker-compose up -d
 # command to run tests
 script: nosetests tests/unit
