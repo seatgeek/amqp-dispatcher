@@ -10,7 +10,7 @@ from aiormq.connection import parse_int, parse_bool
 
 from amqpdispatcher.wait_group import WaitGroup
 
-logger = logging.getLogger("amqp-dispatcher")
+logger = logging.getLogger(__name__)
 
 
 class TrulyRobustConnection(Connection):
@@ -104,6 +104,7 @@ class TrulyRobustConnection(Connection):
         # close all existing channels
         for channel in self.__channels:
             await channel.close()
+        self.__channels = set()
 
         if self.is_closed:
             return
@@ -123,7 +124,6 @@ class TrulyRobustConnection(Connection):
     def channel(self, channel_number: int = None,
                 publisher_confirms: bool = True,
                 on_return_raises=False):
-
         channel = super().channel(
             channel_number=channel_number,
             publisher_confirms=publisher_confirms,
