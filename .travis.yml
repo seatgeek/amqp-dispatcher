@@ -14,13 +14,15 @@ addons:
     packages:
         - libevent-dev
         - shelltestrunner
-# command to install dependencies
+        - bats
+    sources:
+      - sourceline: 'ppa:duggan/bats'
 install:
   - wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz && rm dockerize-linux-amd64-v0.6.1.tar.gz
-  - pip install -r requirements-$TRAVIS_PYTHON_VERSION.txt
   - pip install -r requirements.txt
   - docker-compose build
-# command to run tests
+  - git submodule add https://github.com/ztombol/bats-support tests/test_helper/bats-support
+  - git submodule add https://github.com/ztombol/bats-assert tests/test_helper/bats-assert
 script:
   - nosetests tests/unit
-  - dockerize -wait tcp://localhost:5672 -timeout 25s echo "Waited"
+  - bats tests/integration/basic.bats

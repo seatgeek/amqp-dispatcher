@@ -13,6 +13,7 @@ services:
   rabbit:
     ports:
       - "15673:15672"
+      - "5672:5672"
     image: rabbitmq:management-alpine
   toxiproxy:
     volumes:
