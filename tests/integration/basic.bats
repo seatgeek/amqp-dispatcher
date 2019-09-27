@@ -11,14 +11,18 @@ else
 fi
 
 @test "Basic dispatcher queue and consumer establishment" {
+    NOW_TIMESTAMP=$(date -u +%s)
+
     docker-compose -f docker-compose.yml -f ./tests/integration/basic-compose.override.yml up -d
-    dockerize -wait tcp://localhost:5672 -timeout 25s
-    sleep 10
+    dockerize -wait tcp://localhost:5672 -timeout 15s
+
+    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "primarily initialized"
 
     run bash -c "docker exec amqp-dispatcher_rabbit_1 rabbitmqctl list_queues --quiet | tail -n +2 | sort"
     assert_equal "$status" 0
     assert_equal "${lines[0]}" "second_test_queue	0"
     assert_equal "${lines[1]}" "test_queue	0"
+    assert_equal "${#lines[@]}" 2
 }
 
 teardown() {
