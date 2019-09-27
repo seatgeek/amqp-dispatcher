@@ -262,7 +262,7 @@ async def create_consumption_task(
     random_string = "".join(
         [random_generator.choice(string.ascii_lowercase) for _ in range(10)]
     )
-    consumer_tag = "{0} [{1}] {2}".format(connection_name, consumer_str, random_string)
+    consumer_tag = "{0}-[{1}]-{2}".format(connection_name, consumer_str, random_string)
 
     async with queue.iterator(consumer_tag=consumer_tag) as queue_iterator:
         async for message in queue_iterator:
