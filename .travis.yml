@@ -25,4 +25,4 @@ install:
   - git submodule add https://github.com/ztombol/bats-assert tests/test_helper/bats-assert
 script:
   - nosetests tests/unit
-  - bats tests/integration/basic.bats
+  - bats tests/configuration
