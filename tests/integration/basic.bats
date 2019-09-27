@@ -13,10 +13,9 @@ fi
 @test "Basic dispatcher queue and consumer establishment" {
     docker-compose -f docker-compose.yml -f ./tests/integration/basic-compose.override.yml up -d
     dockerize -wait tcp://localhost:5672 -timeout 25s
-    sleep 20
+    sleep 10
 
     run docker exec amqp-dispatcher_rabbit_1 rabbitmqctl list_queues
-    assert_equal "$output" ""
     assert_equal "$status" 0
     assert_equal "${lines[3]}" "test_queue	0"
     assert_equal "${lines[4]}" "second_test_queue	0"
