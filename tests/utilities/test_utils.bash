@@ -12,13 +12,20 @@ else
 fi
 
 
-function get_sorted_column() {
-  echo "$1" | awk '
-NR==1 {
-    for (i=1; i<=NF; i++) {
-        f[$i] = i
-    }
+function get_sorted_columns() {
+  echo "$1" | csvcut --columns "$2" | tail -n +2 | sort
 }
-{ print $(f["'"$2"'"]) }
-' | tail -n +2 | sort
+
+
+function get_sorted_excluding_columns() {
+  echo "$1" | csvcut --not-columns "$2" | tail -n +2 | sort
+}
+
+
+function clean_csv() {
+  echo "$1" | csvcut
+}
+
+function clean_and_sort_csv() {
+  clean_csv "$1" | csvsort --no-inference --columns "$2"
 }

@@ -1,0 +1,4 @@
+version: '3'
+services:
+  dispatcher:
+    entrypoint: dockerize -wait tcp://rabbit:5672 -timeout 15s python -m amqpdispatcher.dispatcher --config ./tests/configuration/basic-config-test.yml

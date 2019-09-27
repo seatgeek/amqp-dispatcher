@@ -258,6 +258,12 @@ async def create_consumption_task(
     for i in range(0, consumer_count):
         await consumer_pool.put(consumer_class())
 
+    logger.info(
+        "all consumers of class {0} created".format(
+            consumer_class.__name__
+        )
+    )
+
     random_generator = random.SystemRandom()
     random_string = "".join(
         [random_generator.choice(string.ascii_lowercase) for _ in range(10)]

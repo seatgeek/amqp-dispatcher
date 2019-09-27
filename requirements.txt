@@ -1,6 +1,7 @@
 aio-pika==6.1.2
 black==19.3b0
 coverage
+csvkit==1.0.4
 mock
 pika==1.1.0
 pytest-asyncio==0.10.0
