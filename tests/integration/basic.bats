@@ -1,8 +1,8 @@
 # Load from submodule on Travis
-if ! type "brew" > /dev/null; then
+if ! command -v "brew" > /dev/null; then
     TEST_GIT_ROOT="$(git rev-parse --show-toplevel)"
-    load "${TEST_GIT_ROOT}/tests/test_helper/bats-support/load"
-    load "${TEST_GIT_ROOT}/tests/test_helper/bats-assert/load"
+    load "${TEST_GIT_ROOT}/tests/test_helper/bats-support/load.bash"
+    load "${TEST_GIT_ROOT}/tests/test_helper/bats-assert/load.bash"
 else
 # When running locally, use Brew
     TEST_BREW_PREFIX="$(brew --prefix)"
