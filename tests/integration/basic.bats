@@ -16,6 +16,7 @@ fi
     sleep 20
 
     run docker exec amqp-dispatcher_rabbit_1 rabbitmqctl list_queues
+    assert_equal "$output" ""
     assert_equal "$status" 0
     assert_equal "${lines[3]}" "test_queue	0"
     assert_equal "${lines[4]}" "second_test_queue	0"
