@@ -27,9 +27,5 @@ function clean_csv() {
 }
 
 function clean_and_sort_csv() {
-  CLEANED=$(clean_csv "$1")
-  HEADER=$(echo "$CLEANED" | head -n 1)
-  echo "$HEADER"
-  REST=$(echo "$CLEANED" | tail -n +2 | sort)
-  echo "$REST"
+  clean_csv "$1" | csvsort --no-inference --columns "$2"
 }

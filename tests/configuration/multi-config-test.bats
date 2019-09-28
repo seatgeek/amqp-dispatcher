@@ -42,13 +42,13 @@ setup() {
     # each queue is bound to the default exchange
     assert_equal "${#lines[@]}" 5
 
-    run clean_and_sort_csv "$BINDINGS" "source_name,source_kind,destination_name"
-
+    run clean_and_sort_csv "$BINDINGS" "source_name,destination_name"
+#    assert_equal "$output" 14
     assert_line --index 0 "source_name,source_kind,destination_name,destination_kind,routing_key,arguments"
-    assert_line --index 1 ",exchange,second_test_queue,queue,second_test_queue,[]"
-    assert_line --index 2 ",exchange,test_queue,queue,test_queue,[]"
-    assert_line --index 3 "amq.direct,exchange,second_test_queue,queue,queue,[]"
-    assert_line --index 4 "amq.direct,exchange,test_queue,queue,queue,[]"
+    assert_line --index 1 "amq.direct,exchange,second_test_queue,queue,queue,[]"
+    assert_line --index 2 "amq.direct,exchange,test_queue,queue,queue,[]"
+    assert_line --index 3 ",exchange,second_test_queue,queue,second_test_queue,[]"
+    assert_line --index 4 ",exchange,test_queue,queue,test_queue,[]"
 }
 
 teardown() {
