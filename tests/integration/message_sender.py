@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import sys
 from asyncio import AbstractEventLoop
@@ -6,7 +7,7 @@ import aio_pika
 from aio_pika import Exchange, Channel
 
 
-async def main(loop: AbstractEventLoop, exchange: str, queue: str):
+async def main(loop: AbstractEventLoop, exchange: str, queue: str, number: int):
     connection = await aio_pika.connect_robust(
         "amqp://guest:guest@127.0.0.1/", loop=loop)
 
@@ -22,22 +23,24 @@ async def main(loop: AbstractEventLoop, exchange: str, queue: str):
             internal=None,
             passive=None,
         )
-        await exchange.publish(
-            aio_pika.Message(
-                body=b'{}'
-            ),
-            routing_key=queue
-        )
+
+        for i in range(0, number):
+            await exchange.publish(
+                aio_pika.Message(
+                    body=b'{}'
+                ),
+                routing_key=queue
+            )
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Please provide an exchange and a queue.")
-        exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--exchange', default='amq.direct')
+    parser.add_argument('--queue', required=True)
+    parser.add_argument('--number', default=1, type=int)
 
-    exchange = sys.argv[1]
-    queue = sys.argv[2]
+    args = parser.parse_args()
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main(loop, exchange, queue))
+    loop.run_until_complete(main(loop, args.exchange, args.queue, args.number))
     loop.close()

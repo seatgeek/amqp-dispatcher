@@ -1,22 +1,15 @@
-import asyncio
 import logging
-import traceback
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from tests.consumers.base_test_consumer import BaseTestConsumer
 
 logger = logging.getLogger(__name__)
 
 
-class ImmediateConsumer(object):
-    def __init__(self):
-        logger.info("immediate consumer initialized")
-
+class ImmediateConsumer(BaseTestConsumer):
     async def consume(self, amqp: AMQPProxy, msg):
-        logger.debug("immediate consumer receiving message")
+        await super(ImmediateConsumer, self).consume()
         await amqp.ack()
 
-    async def shutdown(self, exception=None):
-        if exception is not None:
-            logging.error(traceback.format_exc())
-        else:
-            logging.debug("Shut down immediate consumer cleanly")
+class ImmediateConsumer2(ImmediateConsumer):
+    pass

@@ -5,7 +5,7 @@ setup() {
     docker-compose kill
 }
 
-@test "Consumption by Consumer" {
+@test "Consumption by Forever Blocking Consumers" {
     NOW_TIMESTAMP=$(date -u +%s)
 
     docker-compose -f docker-compose.yml -f ./tests/integration/consumption-test.compose-override.yml up -d
@@ -14,14 +14,8 @@ setup() {
     ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ForeverConsumer created"
     ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ForeverConsumer2 created"
 
-    python ./tests/integration/message_sender.py amq.direct con_queue_one
-    python ./tests/integration/message_sender.py amq.direct con_queue_one
-    python ./tests/integration/message_sender.py amq.direct con_queue_one
-    python ./tests/integration/message_sender.py amq.direct con_queue_one
-    python ./tests/integration/message_sender.py amq.direct con_queue_one
-    python ./tests/integration/message_sender.py amq.direct con_queue_two
-    python ./tests/integration/message_sender.py amq.direct con_queue_two
-    python ./tests/integration/message_sender.py amq.direct con_queue_two
+    python ./tests/integration/message_sender.py --queue con_queue_one --number 5
+    python ./tests/integration/message_sender.py --queue con_queue_two --number 3
 
     # Make sure ForeverConsumer and ForeverConsumer2 have been initialized
     # the right number of times by counting with grep
