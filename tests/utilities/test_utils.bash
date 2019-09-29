@@ -11,6 +11,16 @@ else
     load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
 fi
 
+function setup_sequence() {
+  docker-compose kill
+}
+
+function teardown_sequence() {
+  docker exec amqp-dispatcher_rabbit_1 rabbitmqctl stop_app
+  docker exec amqp-dispatcher_rabbit_1 rabbitmqctl force_reset
+  docker exec amqp-dispatcher_rabbit_1 rabbitmqctl start_app
+  docker-compose kill
+}
 
 function get_sorted_columns() {
   echo "$1" | csvcut --columns "$2" | tail -n +2 | sort

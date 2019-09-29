@@ -2,7 +2,7 @@ TEST_GIT_ROOT="$(git rev-parse --show-toplevel)"
 load "${TEST_GIT_ROOT}/tests/utilities/test_utils.bash"
 
 setup() {
-    docker-compose kill
+    setup_sequence
 }
 
 @test "Multiple Queue, Binding Consumer Declarations" {
@@ -52,8 +52,5 @@ setup() {
 }
 
 teardown() {
-    docker exec amqp-dispatcher_rabbit_1 rabbitmqctl stop_app
-    docker exec amqp-dispatcher_rabbit_1 rabbitmqctl force_reset
-    docker exec amqp-dispatcher_rabbit_1 rabbitmqctl start_app
-    docker-compose kill
+    teardown_sequence
 }
