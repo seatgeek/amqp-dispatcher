@@ -29,6 +29,3 @@ class Consumer(object):
             logging.error(traceback.format_exc())
         else:
             logging.debug("Shut down primary worker cleanly")
-
-    def __del__(self):
-        logger.info("cleaning up this consumer")
