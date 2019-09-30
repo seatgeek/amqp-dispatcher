@@ -11,11 +11,18 @@ else
     load "${TEST_BREW_PREFIX}/lib/bats-assert/load.bash"
 fi
 
+function log_wait_from() {
+  docker logs -f amqp-dispatcher_dispatcher_1 --since "$1" 2>&1 &
+}
+
 function setup_sequence() {
   docker-compose kill
 }
 
 function teardown_sequence() {
+  # The busybox wget doesn't support POST requests and the toxiproxy-cli doesn't
+  # seem to have a reset option, so we manually construct and send the HTTP
+  # request over with netcat, which is a lot of fun.
   docker exec amqp-dispatcher_toxiproxy_1 /bin/sh -c 'echo -e "POST /reset HTTP/1.1\nHost: localhost:8474\nConnection: close\nContent-Length: 0\n\n" | nc localhost 8474'
   docker exec amqp-dispatcher_rabbit_1 rabbitmqctl stop_app
   docker exec amqp-dispatcher_rabbit_1 rabbitmqctl force_reset

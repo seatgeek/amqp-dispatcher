@@ -11,8 +11,8 @@ setup() {
     docker-compose -f docker-compose.yml -f ./tests/integration/consumption-test.compose-override.yml up -d
     dockerize -wait tcp://localhost:5672 -timeout 15s
 
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ForeverConsumer created"
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ForeverConsumer2 created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class ForeverConsumer created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class ForeverConsumer2 created"
 
     python ./tests/integration/message_sender.py --queue con_queue_one --number 5
     python ./tests/integration/message_sender.py --queue con_queue_two --number 3
@@ -47,8 +47,8 @@ setup() {
     docker-compose -f docker-compose.yml -f ./tests/integration/consumption-test.compose-override.yml up -d
     dockerize -wait tcp://localhost:5672 -timeout 15s
 
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ImmediateConsumer created"
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class ImmediateConsumer2 created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class ImmediateConsumer created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class ImmediateConsumer2 created"
 
     python ./tests/integration/message_sender.py --queue immediate_queue_one --number 5
     python ./tests/integration/message_sender.py --queue immediate_queue_two --number 3

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Callable, Set
+from typing import Callable, Set, Optional
 
 from aio_pika import Connection, RobustChannel, Channel
 from aio_pika.exceptions import CONNECTION_EXCEPTIONS
@@ -53,7 +53,7 @@ class TrulyRobustConnection(Connection):
         return min(2, 0.05 * pow(2, self._reconnect_attempt))
 
     def _on_connection_close(self, connection, closing, *args, **kwargs):
-        logger.warning("connection is closing!")
+        logger.info("connection phase: connection closing")
         self.connection = None
 
         # Have to remove non initialized channels
@@ -82,8 +82,9 @@ class TrulyRobustConnection(Connection):
         self._consumption_task = consumption_task
         self._running_task = asyncio.ensure_future(self._consumption_task())
 
-    async def connect(self, timeout: TimeoutType = None):
+    async def connect(self, timeout: Optional[TimeoutType] = None):
         while True:
+            logger.info("connection phase: awaiting task completion")
             try:
                 return await super().connect(timeout=timeout)
             except CONNECTION_EXCEPTIONS:
@@ -91,7 +92,7 @@ class TrulyRobustConnection(Connection):
                     raise
 
                 logger.warning(
-                    "First connection attempt failed "
+                    "connection phase: first connection attempt failed "
                     "and will be retried after %d seconds",
                     self.reconnect_interval,
                     exc_info=True,
@@ -100,7 +101,7 @@ class TrulyRobustConnection(Connection):
                 await asyncio.sleep(self.reconnect_interval)
 
     async def reconnect(self):
-        logger.exception("reconnection cycle: awaiting task completion")
+        logger.info("reconnection phase: awaiting task completion")
 
         # If we wanted to wait for all outstanding consumers to
         # complete before reconnecting, we can await
@@ -110,7 +111,7 @@ class TrulyRobustConnection(Connection):
         # through the normal cancellation process for futures, and so
         # will continue until its asynchronous operations are completed.
         if self._running_task:
-            logger.info("reconnection cycle: cancelling running task")
+            logger.info("reconnection phase: cancelling running task")
             self._running_task.cancel()
             self._running_task = None
 
@@ -122,11 +123,11 @@ class TrulyRobustConnection(Connection):
         if self.is_closed:
             return
 
-        logger.exception("reconnection cycle: reconnecting")
+        logger.info("reconnection phase: reconnecting")
         try:
             await super().connect()
         except CONNECTION_EXCEPTIONS:
-            logger.exception("Connection attempt error")
+            logger.exception("reconnection phase: connect attempt error")
             self._reconnect_attempt += 1
 
             self.loop.call_later(
@@ -158,13 +159,14 @@ class TrulyRobustConnection(Connection):
             try:
                 await channel.on_reconnect(self, number)
             except CONNECTION_EXCEPTIONS:
-                logger.exception("Open channel failure")
+                logger.exception("reconnection phase: open channel failure")
                 await self.close()
                 return
 
         self._on_reconnect_callbacks(self)
         if self._consumption_task:
             self._running_task = asyncio.ensure_future(self._consumption_task())
+        logger.info("reconnection phase: success")
 
     @property
     def is_closed(self):

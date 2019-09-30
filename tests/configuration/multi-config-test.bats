@@ -11,8 +11,8 @@ setup() {
     docker-compose -f docker-compose.yml -f ./tests/configuration/multi-config-test.compose-override.yml up -d
     dockerize -wait tcp://localhost:5672 -timeout 15s
 
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class Consumer created"
-    ( docker logs -f amqp-dispatcher_dispatcher_1 --since "$NOW_TIMESTAMP" 2>&1 & ) | grep -q "all consumers of class SecondaryConsumer created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class Consumer created"
+    ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class SecondaryConsumer created"
 
     run docker exec amqp-dispatcher_rabbit_1 rabbitmqctl list_queues --quiet --formatter csv
     QUEUES=$output
