@@ -1,14 +1,13 @@
 import argparse
 import asyncio
-import sys
 from asyncio import AbstractEventLoop
 
 import aio_pika
-from aio_pika import Exchange, Channel
+from aio_pika import Exchange, Channel, RobustConnection
 
 
-async def main(loop: AbstractEventLoop, exchange: str, queue: str, number: int):
-    connection = await aio_pika.connect_robust(
+async def main(loop: AbstractEventLoop, exchange_name: str, queue: str, number: int) -> None:
+    connection: RobustConnection = await aio_pika.connect_robust(
         "amqp://guest:guest@127.0.0.1/", loop=loop
     )
 
@@ -16,7 +15,7 @@ async def main(loop: AbstractEventLoop, exchange: str, queue: str, number: int):
         channel: Channel = await connection.channel()
 
         exchange = Exchange(
-            name=exchange,
+            name=exchange_name,
             connection=connection,
             channel=channel.channel,
             auto_delete=None,

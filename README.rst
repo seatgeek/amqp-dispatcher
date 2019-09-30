@@ -68,7 +68,7 @@ Example consumer:
 
     class Consumer(object):
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.init_msg = "I've been initiliazed"
 
         def consume(self, amqp, msg):
@@ -208,7 +208,7 @@ Pools can be created and attached to the consumer class during the ``__init__``.
 
         session_maker = None
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.session = None
 
             if Consumer._engine is None:

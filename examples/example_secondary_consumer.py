@@ -12,7 +12,7 @@ class SecondaryConsumer(object):
     acknowledging or rejecting, but just does some work.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         logger.info("I've been secondarily initialized!")
 
     async def consume(self, amqp, msg):

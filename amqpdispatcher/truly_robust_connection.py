@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Callable, Set, Optional
+from asyncio import AbstractEventLoop
+from typing import Callable, Set, Optional, Dict
 
 from aio_pika import Connection, RobustChannel, Channel
 from aio_pika.exceptions import CONNECTION_EXCEPTIONS
@@ -26,7 +27,7 @@ class TrulyRobustConnection(Connection):
         ("fail_fast", parse_bool, "1"),
     )
 
-    def __init__(self, url, loop=None, **kwargs):
+    def __init__(self, url: str, loop: Optional[AbstractEventLoop] = None, **kwargs) -> None:
         super().__init__(loop=loop or asyncio.get_event_loop(), url=url, **kwargs)
 
         self.fail_fast = self.kwargs["fail_fast"]
@@ -45,7 +46,7 @@ class TrulyRobustConnection(Connection):
         return self._on_reconnect_callbacks
 
     @property
-    def _channels(self) -> dict:
+    def _channels(self) -> Dict[int, Channel]:
         return {ch.number: ch for ch in self.__channels}
 
     @property

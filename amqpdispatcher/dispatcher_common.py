@@ -5,7 +5,7 @@ import argparse
 import asyncio
 import types
 from asyncio import AbstractEventLoop
-from typing import Dict, Optional, Type, Any
+from typing import Dict, Optional, Type, Any, Awaitable, Callable
 from typing_extensions import Protocol
 
 import aio_pika
@@ -298,8 +298,8 @@ async def create_consumption_task(
 
 def create_begin_consumption_task(
     config: Dict[Any, Any], connection: TrulyRobustConnection, connection_name: str
-):
-    async def begin_consumption_task():
+) -> Callable[[], Awaitable[None]]:
+    async def begin_consumption_task() -> None:
         consumer_tasks = []
         for consumer in config.get("consumers", []):
             consumer_tasks.append(

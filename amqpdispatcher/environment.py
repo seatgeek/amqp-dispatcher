@@ -4,7 +4,7 @@ import os
 class Environment(object):
     app_name: str
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.app_name = os.getenv("APP", "")
         self.nomad_alloc_id = os.getenv("NOMAD_ALLOC_ID", "")
         self.nomad_job_name = os.getenv("NOMAD_JOB_NAME", "")
@@ -13,5 +13,5 @@ class Environment(object):
         )
 
     @classmethod
-    def create(cls):
+    def create(cls) -> 'Environment':
         return Environment()

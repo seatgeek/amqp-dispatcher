@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Consumer(object):
-    def __init__(self):
+    def __init__(self) -> None:
         logger.info("I've been primarily initialized!")
 
     async def consume(self, amqp: AMQPProxy, msg):
