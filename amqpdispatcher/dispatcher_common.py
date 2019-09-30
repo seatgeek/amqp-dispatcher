@@ -351,4 +351,4 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
     consumption_task = create_begin_consumption_task(
         config, connection, connection_name
     )
-    connection.set_consumption_task(consumption_task)
+    connection.set_and_schedule_consumption_task(consumption_task)

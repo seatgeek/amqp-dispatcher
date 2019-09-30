@@ -18,7 +18,7 @@ class TrulyRobustConnection(Connection):
 
     consumer_completion_group: WaitGroup
     __channels: Set[Channel]
-    __reconnect_attempt: int
+    _reconnect_attempt: int
 
     CHANNEL_CLASS = RobustChannel
     KWARGS_TYPES = (
@@ -38,7 +38,7 @@ class TrulyRobustConnection(Connection):
         self._consumption_task = None
         self._running_task = None
         self._closed = False
-        self.__reconnect_attempt = 1
+        self._reconnect_attempt = 1
 
     @property
     def on_reconnect_callbacks(self) -> CallbackCollection:
@@ -50,7 +50,7 @@ class TrulyRobustConnection(Connection):
 
     @property
     def reconnect_interval(self) -> int:
-        return min(2, 0.05 * pow(2, self.__reconnect_attempt))
+        return min(2, 0.05 * pow(2, self._reconnect_attempt))
 
     def _on_connection_close(self, connection, closing, *args, **kwargs):
         logger.warning("connection is closing!")
@@ -73,9 +73,10 @@ class TrulyRobustConnection(Connection):
 
         self._on_reconnect_callbacks.add(callback)
 
-    def set_consumption_task(self, consumption_task):
-        """ Add callback which will be called after reconnect.
-
+    def set_and_schedule_consumption_task(self, consumption_task):
+        """
+        Sets a consumption task for this connection and schedules
+        it to run.
         :return: None
         """
         self._consumption_task = consumption_task
@@ -101,9 +102,13 @@ class TrulyRobustConnection(Connection):
     async def reconnect(self):
         logger.exception("reconnection cycle: awaiting task completion")
 
-        # wait for all outstanding consumers to complete before
-        # reconnecting
-        # await self.consumer_completion_group.event.wait()
+        # If we wanted to wait for all outstanding consumers to
+        # complete before reconnecting, we can await
+        # the wait group found in self.consumer_completion_group.event.wait(). But
+        # this is not strictly necessary, since asyncio.ensure_future, which
+        # dispatches the consumption_coroutine, does not get cancelled
+        # through the normal cancellation process for futures, and so
+        # will continue until its asynchronous operations are completed.
         if self._running_task:
             logger.info("reconnection cycle: cancelling running task")
             self._running_task.cancel()
@@ -122,14 +127,14 @@ class TrulyRobustConnection(Connection):
             await super().connect()
         except CONNECTION_EXCEPTIONS:
             logger.exception("Connection attempt error")
-            self.__reconnect_attempt += 1
+            self._reconnect_attempt += 1
 
             self.loop.call_later(
                 self.reconnect_interval, lambda: self.loop.create_task(self.reconnect())
             )
         else:
             # reset exponential backoff
-            self.__reconnect_attempt = 1
+            self._reconnect_attempt = 1
             await self._on_reconnect()
 
     def channel(
