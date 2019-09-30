@@ -35,7 +35,8 @@ class TrulyRobustConnection(Connection):
 
         self.__channels = set()
         self._on_reconnect_callbacks = CallbackCollection()
-        self._reconnect_task = None
+        self._consumption_task = None
+        self._running_task = None
         self._closed = False
         self.__reconnect_attempt = 1
 
@@ -72,12 +73,15 @@ class TrulyRobustConnection(Connection):
 
         self._on_reconnect_callbacks.add(callback)
 
-    def set_reconnect_task(self, task):
+    def set_consumption_task(self, consumption_task):
         """ Add callback which will be called after reconnect.
 
         :return: None
         """
-        self._reconnect_task = task
+        self._consumption_task = consumption_task
+
+        running_task = asyncio.ensure_future(self._consumption_task())
+        self._running_task = running_task
 
     async def connect(self, timeout: TimeoutType = None):
         while True:
@@ -151,8 +155,9 @@ class TrulyRobustConnection(Connection):
                 return
 
         self._on_reconnect_callbacks(self)
-        if self._reconnect_task:
-            await self._reconnect_task()
+        if self._consumption_task:
+            asyncio.ensure_future(self._consumption_task())
+
 
     @property
     def is_closed(self):

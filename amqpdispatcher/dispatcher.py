@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 import asyncio
+import functools
 import logging
 import os
 
@@ -26,8 +27,11 @@ def main():
     logger.info("Connection: {0}".format(args.connection))
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(initialize_dispatcher(loop))
-    loop.close()
+    asyncio.ensure_future(initialize_dispatcher(loop))
+    try:
+        loop.run_forever()
+    except Exception:
+        loop.close()
 
 
 if __name__ == "__main__":

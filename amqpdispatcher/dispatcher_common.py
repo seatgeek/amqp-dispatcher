@@ -317,7 +317,7 @@ def create_begin_consumption_task(
 
 async def initialize_dispatcher(loop: AbstractEventLoop):
     logger = logging.getLogger("amqp-dispatcher")
-
+    logger.info("initialized amqp-dispatcher")
     args = get_args_from_cli()
     config = yaml.safe_load(open(args.config).read())
 
@@ -351,6 +351,4 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
     consumption_task = create_begin_consumption_task(
         config, connection, connection_name
     )
-    connection.set_reconnect_task(consumption_task)
-
-    await consumption_task()
+    connection.set_consumption_task(consumption_task)
