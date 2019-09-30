@@ -10,7 +10,7 @@ setup() {
 }
 
 #  Test to Write
-# 1. N messages sent
+# N messages sent
 #    - trigger disconnect
 #    - consumers finish work on task
 #    - consumers unable to ack message
@@ -19,12 +19,6 @@ setup() {
 #    - consumers consume message
 #    - consumers finish work on task
 #    - consumers able to ack message
-#
-# 2. Disconnect/Reconnect that occurs while consumer is working
-#    should allow consumer to complete work and then destroy itself
-#    without requeue
-
-
 @test "Reconnection behavior assumes idempotence of consumers" {
     NOW_TIMESTAMP=$(date -u +%s)
 
