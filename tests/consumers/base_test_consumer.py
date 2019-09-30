@@ -3,6 +3,7 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+
 class BaseTestConsumer(object):
     @property
     def class_name(self) -> str:

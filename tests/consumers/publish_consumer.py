@@ -11,4 +11,4 @@ class PublishConsumer(BaseTestConsumer):
     async def consume(self, amqp: AMQPProxy, msg):
         await super(PublishConsumer, self).consume(amqp, msg)
         await amqp.ack()
-        await amqp.publish('amq.direct', 'publish_queue', headers={}, body=b'')
+        await amqp.publish("amq.direct", "publish_queue", headers={}, body=b"")
