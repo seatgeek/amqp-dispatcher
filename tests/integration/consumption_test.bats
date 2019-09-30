@@ -68,7 +68,8 @@ setup() {
     QUEUES=$output
     assert_equal "${#lines[@]}" 5
 
-    # Messages have not been acknowledged, so they stay on the queue.
+    # Messages have been acknowledged, so no queue has any
+    # messages left.
     run clean_and_sort_csv "$QUEUES"
     assert_line --index 0 "name,messages"
     assert_line --index 1 "con_queue_one,0"
@@ -80,8 +81,3 @@ setup() {
 teardown() {
     teardown_sequence
 }
-
-# disconnection test
-# test that when n messages are being consumed, and there is a
-# disconnection, n messages are still queued after the reconnection
-# happens

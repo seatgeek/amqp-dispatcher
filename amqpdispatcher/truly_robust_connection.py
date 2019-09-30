@@ -99,7 +99,8 @@ class TrulyRobustConnection(Connection):
     async def reconnect(self):
         logger.exception("Reconnection cycle beginning: {0}".format(self.is_closed))
 
-        # wait for all outstanding consumers to complete
+        # wait for all outstanding consumers to complete before
+        # reconnecting
         await self.consumer_completion_group.event.wait()
 
         # close all existing channels

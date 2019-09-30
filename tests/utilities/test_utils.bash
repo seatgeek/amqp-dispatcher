@@ -16,6 +16,7 @@ function setup_sequence() {
 }
 
 function teardown_sequence() {
+  docker exec amqp-dispatcher_toxiproxy_1 /bin/sh -c 'echo -e "POST /reset HTTP/1.1\nHost: localhost:8474\nConnection: close\nContent-Length: 0\n\n" | nc localhost 8474'
   docker exec amqp-dispatcher_rabbit_1 rabbitmqctl stop_app
   docker exec amqp-dispatcher_rabbit_1 rabbitmqctl force_reset
   docker exec amqp-dispatcher_rabbit_1 rabbitmqctl start_app
