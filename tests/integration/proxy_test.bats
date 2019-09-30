@@ -21,12 +21,10 @@ setup() {
     docker-compose -f docker-compose.yml -f ./tests/integration/proxy-test.compose-override.yml up -d
     dockerize -wait tcp://localhost:5672 -timeout 15s
 
-    # This is regular initialization stuff. Wait for amqp-dispatcher to
-    # create the consumers
     ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class PublishConsumer created"
     ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "all consumers of class ForeverConsumer created"
 
-    # Send five messages to the disco_queue
+    # Send five messages to the main_proxy_queue
     python ./tests/integration/message_sender.py --queue main_proxy_queue --number 5
 
     # Make sure the messages have been received 5 times
@@ -34,8 +32,7 @@ setup() {
     PUBLISH_CONSUMER_RECEIVED_MESSAGE=$(echo "$LOGS_SINCE" | grep -c "PublishConsumer receiving message")
     assert_equal "$PUBLISH_CONSUMER_RECEIVED_MESSAGE" 5
 
-    # ensure_future goes on in the background during the forever asyncio loop even if
-    # we were to cancel the consumption task future on reconnect
+    # The publish consumer publishes
     ( log_wait_from "$NOW_TIMESTAMP" ) | grep -q "ForeverConsumer receiving message"
 
     LOGS_SINCE=$(docker logs amqp-dispatcher_dispatcher_1 --since "$RECONNECT_MARK_TIMESTAMP" 2>&1)
