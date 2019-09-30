@@ -79,9 +79,7 @@ class TrulyRobustConnection(Connection):
         :return: None
         """
         self._consumption_task = consumption_task
-
-        running_task = asyncio.ensure_future(self._consumption_task())
-        self._running_task = running_task
+        self._running_task = asyncio.ensure_future(self._consumption_task())
 
     async def connect(self, timeout: TimeoutType = None):
         while True:
@@ -101,11 +99,15 @@ class TrulyRobustConnection(Connection):
                 await asyncio.sleep(self.reconnect_interval)
 
     async def reconnect(self):
-        logger.exception("Reconnection cycle beginning: {0}".format(self.is_closed))
+        logger.exception("reconnection cycle: awaiting task completion")
 
         # wait for all outstanding consumers to complete before
         # reconnecting
-        await self.consumer_completion_group.event.wait()
+        # await self.consumer_completion_group.event.wait()
+        if self._running_task:
+            logger.info("reconnection cycle: cancelling running task")
+            self._running_task.cancel()
+            self._running_task = None
 
         # close all existing channels
         for channel in self.__channels:
@@ -115,6 +117,7 @@ class TrulyRobustConnection(Connection):
         if self.is_closed:
             return
 
+        logger.exception("reconnection cycle: reconnecting")
         try:
             await super().connect()
         except CONNECTION_EXCEPTIONS:
@@ -156,8 +159,7 @@ class TrulyRobustConnection(Connection):
 
         self._on_reconnect_callbacks(self)
         if self._consumption_task:
-            asyncio.ensure_future(self._consumption_task())
-
+            self._running_task = asyncio.ensure_future(self._consumption_task())
 
     @property
     def is_closed(self):

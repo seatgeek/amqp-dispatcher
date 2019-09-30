@@ -19,3 +19,6 @@ class BaseTestConsumer(object):
             logging.error(traceback.format_exc())
         else:
             logging.info("shutting down {0}".format(self.class_name))
+
+    def __del__(self):
+        logger.info("{0} destroyed".format(self.class_name))

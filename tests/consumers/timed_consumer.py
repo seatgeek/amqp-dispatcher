@@ -8,9 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class TimedConsumer(BaseTestConsumer):
+    def __init__(self):
+        super(TimedConsumer, self).__init__()
+
     @property
     def waiting_time(self) -> int:
-        return 5
+        return 7
 
     async def consume(self, amqp: AMQPProxy, msg):
         await super(TimedConsumer, self).consume(amqp, msg)
