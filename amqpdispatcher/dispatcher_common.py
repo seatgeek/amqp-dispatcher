@@ -340,18 +340,17 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         logger.warning("Unable to establish connection -- returning")
         return
 
-    async with connection:
-        queues = config.get("queues")
-        if queues:
-            channel = await connection.channel()
-            await create_and_bind_queues(channel, queues)
-            await channel.close()
+    queues = config.get("queues")
+    if queues:
+        channel = await connection.channel()
+        await create_and_bind_queues(channel, queues)
+        await channel.close()
 
-        connection.add_close_callback(create_connection_closed_cb())
+    connection.add_close_callback(create_connection_closed_cb())
 
-        consumption_task = create_begin_consumption_task(
-            config, connection, connection_name
-        )
-        connection.set_reconnect_task(consumption_task)
+    consumption_task = create_begin_consumption_task(
+        config, connection, connection_name
+    )
+    connection.set_reconnect_task(consumption_task)
 
-        await consumption_task()
+    await consumption_task()
