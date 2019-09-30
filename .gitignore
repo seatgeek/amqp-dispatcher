@@ -1,4 +1,5 @@
 *.py[co]
+.mypy_cache
 
 # Testing
 nosetests.xml
