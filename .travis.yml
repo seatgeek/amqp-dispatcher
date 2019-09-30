@@ -27,3 +27,4 @@ script:
   - nosetests tests/unit
   - bats tests/configuration
   - bats tests/integration
+  - black --check .
