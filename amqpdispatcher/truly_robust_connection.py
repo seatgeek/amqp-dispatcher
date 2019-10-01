@@ -20,7 +20,7 @@ class TrulyRobustConnection(Connection):
     connection: Optional[aiormq.connection.Connection]  # type: ignore
     consumer_completion_group: WaitGroup
     _reconnect_attempt: int
-    _running_task: Optional[Future[None]]
+    _running_task: Optional[Future]
     _on_reconnect_callbacks: CallbackCollection
     _consumption_task: Optional[Callable[[], Awaitable[None]]]
     __channels: Set[RobustChannel]
@@ -150,11 +150,11 @@ class TrulyRobustConnection(Connection):
         publisher_confirms: bool = True,
         on_return_raises: bool = False,
     ) -> RobustChannel:
-        channel: RobustChannel = super().channel(
-            channel_number=channel_number,
+        channel: RobustChannel = super().channel(  # type: ignore
+            channel_number=channel_number,  # type: ignore
             publisher_confirms=publisher_confirms,
             on_return_raises=on_return_raises,
-        )  # type: ignore
+        )
 
         self.__channels.add(channel)
 
