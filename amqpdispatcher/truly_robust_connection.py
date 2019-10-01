@@ -27,11 +27,15 @@ class TrulyRobustConnection(Connection):
 
     CHANNEL_CLASS = RobustChannel
 
-    def __init__(self, url: str, loop: Optional[AbstractEventLoop] = None) -> None:
+    def __init__(
+        self,
+        url: str,
+        loop: Optional[AbstractEventLoop] = None,
+        fail_fast: bool = False,
+    ) -> None:
         super().__init__(loop=loop or asyncio.get_event_loop(), url=url)
 
-        self.fail_fast = self.kwargs["fail_fast"]
-
+        self.fail_fast = fail_fast
         self.consumer_completion_group = WaitGroup()
 
         self.__channels = set()
