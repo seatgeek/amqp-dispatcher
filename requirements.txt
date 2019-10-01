@@ -3,8 +3,8 @@ black==19.3b0
 coverage
 csvkit==1.0.4
 mock
+mypy==0.730
 pika==1.1.0
 pytest-asyncio==0.10.0
 pytest==5.1.2
 pyyaml
-
