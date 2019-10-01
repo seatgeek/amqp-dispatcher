@@ -63,7 +63,9 @@ def get_args_from_cli() -> argparse.Namespace:
     return args
 
 
-def channel_closed_cb(ch: Channel, reply_code : Optional[str] = None, reply_text: Optional[str] = None) -> None:
+def channel_closed_cb(
+    ch: Channel, reply_code: Optional[str] = None, reply_text: Optional[str] = None
+) -> None:
     info = "[{0}] {1}".format(reply_code, reply_text)
     logger = logging.getLogger("amqp-dispatcher")
     logger.info("AMQP channel closed; close-info: {0}".format(info))
@@ -147,7 +149,9 @@ async def bind_queue(created_queue: Queue, queue_spec: Dict[str, Any]) -> None:
         await created_queue.bind(exchange, key)
 
 
-async def create_and_bind_queues(channel: Channel, queues: List[Dict[str, Any]]) -> Dict[str, Queue]:
+async def create_and_bind_queues(
+    channel: Channel, queues: List[Dict[str, Any]]
+) -> Dict[str, Queue]:
     created_queues: Dict[str, Queue] = {}
 
     for queue in queues:

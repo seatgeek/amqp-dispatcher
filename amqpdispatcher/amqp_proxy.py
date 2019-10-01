@@ -32,7 +32,7 @@ class AMQPProxy(object):
         self._error_if_already_terminated()
         await self._message.raw_message.nack()
 
-    async def reject(self, requeue : bool = True) -> None:
+    async def reject(self, requeue: bool = True) -> None:
         self._error_if_already_terminated()
         await self._message.raw_message.reject(requeue=requeue)
 
@@ -46,7 +46,7 @@ class AMQPProxy(object):
             auto_delete=None,
             durable=None,
             internal=None,
-            passive=None
+            passive=None,
         )
 
         message = AioPikaMessage(body=body, headers=headers)

@@ -44,4 +44,6 @@ class Message(object):
         return False
 
     def __str__(self) -> str:
-        return ("Message[body: {}, delivery_tag: {}]").format(self._body, self._raw_message.delivery_tag)
+        return ("Message[body: {}, delivery_tag: {}]").format(
+            self._body, self._raw_message.delivery_tag
+        )

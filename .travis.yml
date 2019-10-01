@@ -28,3 +28,4 @@ script:
   - bats tests/configuration
   - bats tests/integration
   - black --check .
+  - mypy .

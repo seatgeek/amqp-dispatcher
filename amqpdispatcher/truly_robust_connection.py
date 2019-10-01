@@ -53,7 +53,9 @@ class TrulyRobustConnection(Connection):
     def reconnect_interval(self) -> float:
         return min(2, 0.05 * pow(2, self._reconnect_attempt))  # type: ignore
 
-    def _on_connection_close(self, connection: Any, closing: Any, *args: Any, **kwargs: Any) -> None:
+    def _on_connection_close(
+        self, connection: Any, closing: Any, *args: Any, **kwargs: Any
+    ) -> None:
         logger.info("connection phase: connection closing")
         self.connection = None
 
@@ -74,7 +76,9 @@ class TrulyRobustConnection(Connection):
 
         self._on_reconnect_callbacks.add(callback)
 
-    def set_and_schedule_consumption_task(self, consumption_task: Callable[[], Awaitable[None]]) -> None:
+    def set_and_schedule_consumption_task(
+        self, consumption_task: Callable[[], Awaitable[None]]
+    ) -> None:
         """
         Sets a consumption task for this connection and schedules
         it to run.
@@ -146,7 +150,11 @@ class TrulyRobustConnection(Connection):
         publisher_confirms: bool = True,
         on_return_raises: bool = False,
     ) -> RobustChannel:
-        channel: RobustChannel = super().channel(channel_number=channel_number, publisher_confirms=publisher_confirms, on_return_raises=on_return_raises)  # type: ignore
+        channel: RobustChannel = super().channel(
+            channel_number=channel_number,
+            publisher_confirms=publisher_confirms,
+            on_return_raises=on_return_raises,
+        )  # type: ignore
 
         self.__channels.add(channel)
 

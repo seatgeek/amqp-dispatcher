@@ -13,5 +13,5 @@ class Environment(object):
         )
 
     @classmethod
-    def create(cls) -> 'Environment':
+    def create(cls) -> "Environment":
         return Environment()

@@ -6,7 +6,9 @@ import aio_pika
 from aio_pika import Exchange, Channel, RobustConnection
 
 
-async def main(loop: AbstractEventLoop, exchange_name: str, queue: str, number: int) -> None:
+async def main(
+    loop: AbstractEventLoop, exchange_name: str, queue: str, number: int
+) -> None:
     connection: RobustConnection = await aio_pika.connect_robust(
         "amqp://guest:guest@127.0.0.1/", loop=loop
     )
