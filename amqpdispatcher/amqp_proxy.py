@@ -37,7 +37,7 @@ class AMQPProxy(object):
         await self._message.raw_message.reject(requeue=requeue)
 
     async def publish(
-        self, exchange_name: str, routing_key: str, headers: Dict[Any, Any], body: bytes
+        self, exchange_name: str, routing_key: str, headers: Dict[str, Any], body: bytes
     ) -> None:
         exchange = Exchange(
             name=exchange_name,
