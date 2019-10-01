@@ -19,7 +19,7 @@ class BaseTestConsumer(object):
     async def consume(self, amqp: AMQPProxy, msg: Message) -> None:
         logger.info("{0} receiving message".format(self.class_name))
 
-    async def shutdown(self, exception: Optional[Exception] = None):
+    async def shutdown(self, exception: Optional[Exception] = None) -> None:
         if exception is not None:
             logging.error(traceback.format_exc())
         else:

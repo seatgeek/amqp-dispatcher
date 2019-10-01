@@ -1,13 +1,13 @@
 import asyncio
 import logging
-from asyncio import AbstractEventLoop
-from typing import Callable, Set, Optional, Dict
+from asyncio import AbstractEventLoop, Future
+from typing import Callable, Set, Optional, Dict, Any, Type, Awaitable
 
+import aiormq
 from aio_pika import Connection, RobustChannel, Channel
 from aio_pika.exceptions import CONNECTION_EXCEPTIONS
 from aio_pika.tools import CallbackCollection
 from aio_pika.types import TimeoutType
-from aiormq.connection import parse_int, parse_bool
 
 from amqpdispatcher.wait_group import WaitGroup
 
@@ -17,18 +17,18 @@ logger = logging.getLogger(__name__)
 class TrulyRobustConnection(Connection):
     """Truly Robust connection """
 
+    connection: Optional[aiormq.connection.Connection]  # type: ignore
     consumer_completion_group: WaitGroup
-    __channels: Set[Channel]
     _reconnect_attempt: int
+    _running_task: Optional[Future[None]]
+    _on_reconnect_callbacks: CallbackCollection
+    _consumption_task: Optional[Callable[[], Awaitable[None]]]
+    __channels: Set[RobustChannel]
 
     CHANNEL_CLASS = RobustChannel
-    KWARGS_TYPES = (
-        ("reconnect_interval", parse_int, "5"),
-        ("fail_fast", parse_bool, "1"),
-    )
 
-    def __init__(self, url: str, loop: Optional[AbstractEventLoop] = None, **kwargs) -> None:
-        super().__init__(loop=loop or asyncio.get_event_loop(), url=url, **kwargs)
+    def __init__(self, url: str, loop: Optional[AbstractEventLoop] = None) -> None:
+        super().__init__(loop=loop or asyncio.get_event_loop(), url=url)
 
         self.fail_fast = self.kwargs["fail_fast"]
 
@@ -46,14 +46,14 @@ class TrulyRobustConnection(Connection):
         return self._on_reconnect_callbacks
 
     @property
-    def _channels(self) -> Dict[int, Channel]:
+    def _channels(self) -> Dict[int, RobustChannel]:
         return {ch.number: ch for ch in self.__channels}
 
     @property
-    def reconnect_interval(self) -> int:
-        return min(2, 0.05 * pow(2, self._reconnect_attempt))
+    def reconnect_interval(self) -> float:
+        return min(2, 0.05 * pow(2, self._reconnect_attempt))  # type: ignore
 
-    def _on_connection_close(self, connection, closing, *args, **kwargs):
+    def _on_connection_close(self, connection: Any, closing: Any, *args: Any, **kwargs: Any) -> None:
         logger.info("connection phase: connection closing")
         self.connection = None
 
@@ -66,7 +66,7 @@ class TrulyRobustConnection(Connection):
             self.reconnect_interval, lambda: self.loop.create_task(self.reconnect())
         )
 
-    def add_reconnect_callback(self, callback: Callable[[], None]):
+    def add_reconnect_callback(self, callback: Callable[[], None]) -> None:
         """ Add callback which will be called after reconnect.
 
         :return: None
@@ -74,20 +74,21 @@ class TrulyRobustConnection(Connection):
 
         self._on_reconnect_callbacks.add(callback)
 
-    def set_and_schedule_consumption_task(self, consumption_task):
+    def set_and_schedule_consumption_task(self, consumption_task: Callable[[], Awaitable[None]]) -> None:
         """
         Sets a consumption task for this connection and schedules
         it to run.
         :return: None
         """
         self._consumption_task = consumption_task
-        self._running_task = asyncio.ensure_future(self._consumption_task())
+        if self._consumption_task:
+            self._running_task = asyncio.ensure_future(self._consumption_task())
 
-    async def connect(self, timeout: Optional[TimeoutType] = None):
+    async def connect(self, timeout: Optional[TimeoutType] = None) -> None:
         while True:
             logger.info("connection phase: awaiting task completion")
             try:
-                return await super().connect(timeout=timeout)
+                return await super().connect(timeout=timeout)  # type: ignore
             except CONNECTION_EXCEPTIONS:
                 if self.fail_fast:
                     raise
@@ -101,7 +102,7 @@ class TrulyRobustConnection(Connection):
 
                 await asyncio.sleep(self.reconnect_interval)
 
-    async def reconnect(self):
+    async def reconnect(self) -> None:
         logger.info("reconnection phase: awaiting task completion")
 
         # If we wanted to wait for all outstanding consumers to
@@ -141,21 +142,17 @@ class TrulyRobustConnection(Connection):
 
     def channel(
         self,
-        channel_number: int = None,
+        channel_number: Optional[int] = None,
         publisher_confirms: bool = True,
-        on_return_raises=False,
-    ):
-        channel = super().channel(
-            channel_number=channel_number,
-            publisher_confirms=publisher_confirms,
-            on_return_raises=on_return_raises,
-        )
+        on_return_raises: bool = False,
+    ) -> RobustChannel:
+        channel: RobustChannel = super().channel(channel_number=channel_number, publisher_confirms=publisher_confirms, on_return_raises=on_return_raises)  # type: ignore
 
         self.__channels.add(channel)
 
         return channel
 
-    async def _on_reconnect(self):
+    async def _on_reconnect(self) -> None:
         for number, channel in self._channels.items():
             try:
                 await channel.on_reconnect(self, number)
@@ -170,11 +167,11 @@ class TrulyRobustConnection(Connection):
         logger.info("reconnection phase: success")
 
     @property
-    def is_closed(self):
+    def is_closed(self) -> bool:
         """ Is this connection is closed """
         return self._closed or super().is_closed
 
-    async def close(self, exc=asyncio.CancelledError):
+    async def close(self, exc: Type[Exception] = asyncio.CancelledError) -> Any:
         if self.is_closed:
             return
 

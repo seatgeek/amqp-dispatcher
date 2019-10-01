@@ -5,7 +5,7 @@ import argparse
 import asyncio
 import types
 from asyncio import AbstractEventLoop
-from typing import Dict, Optional, Type, Any, Awaitable, Callable
+from typing import Dict, Optional, Type, Any, Awaitable, Callable, List
 from typing_extensions import Protocol
 
 import aio_pika
@@ -33,7 +33,7 @@ class DispatcherConsumer(Protocol):
         ...
 
 
-def get_args_from_cli():
+def get_args_from_cli() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run Graphite Pager")
     parser.add_argument(
         "--config",
@@ -63,34 +63,30 @@ def get_args_from_cli():
     return args
 
 
-def channel_closed_cb(ch, reply_code=None, reply_text=None):
+def channel_closed_cb(ch: Channel, reply_code : Optional[str] = None, reply_text: Optional[str] = None) -> None:
     info = "[{0}] {1}".format(reply_code, reply_text)
-    if reply_text is None:
-        info = ch.close_info
-
     logger = logging.getLogger("amqp-dispatcher")
     logger.info("AMQP channel closed; close-info: {0}".format(info))
-    ch = None
     return
 
 
-def create_connection_closed_cb():
-    def connection_closed_cb(*args, **kwargs):
+def create_connection_closed_cb() -> Callable[[Any, Any], None]:
+    def connection_closed_cb(*args: Any, **kwargs: Any) -> None:
         logger = logging.getLogger("amqp-dispatcher")
         logger.info("AMQP broker connection closed; close-info")
 
     return connection_closed_cb
 
 
-def create_reconnection_callback():
-    def reconnect_callback(*args, **kwargs):
+def create_reconnection_callback() -> Callable[[Any, Any], None]:
+    def reconnect_callback(*args: Any, **kwargs: Any) -> None:
         logger = logging.getLogger("amqp-dispatcher")
         logger.info("AMQP broker reconnected!; close-info")
 
     return reconnect_callback
 
 
-async def create_queue(channel: Channel, queue) -> Queue:
+async def create_queue(channel: Channel, queue: Dict[str, Any]) -> Queue:
     """creates a queue synchronously"""
     logger = logging.getLogger("amqp-dispatcher")
     name = queue["queue"]
@@ -115,7 +111,7 @@ async def create_queue(channel: Channel, queue) -> Queue:
         if queue.get(queue_arg):
             arguments[key] = queue.get(queue_arg)
 
-    queue: Queue = await channel.declare_queue(
+    declared_queue: Queue = await channel.declare_queue(
         name=name,
         passive=passive,
         exclusive=exclusive,
@@ -127,20 +123,20 @@ async def create_queue(channel: Channel, queue) -> Queue:
     log_message = "Queue {0} - {1} messages and {1} consumers connected"
     logger.info(
         log_message.format(
-            queue.name,
-            queue.declaration_result.message_count,
-            queue.declaration_result.consumer_count,
+            declared_queue.name,
+            declared_queue.declaration_result.message_count,
+            declared_queue.declaration_result.consumer_count,
         )
     )
 
-    return queue
+    return declared_queue
 
 
-async def bind_queue(created_queue: Queue, queue_spec) -> None:
+async def bind_queue(created_queue: Queue, queue_spec: Dict[str, Any]) -> None:
     """binds a queue to the bindings identified in the doc"""
     logger = logging.getLogger("amqp-dispatcher")
     logger.debug("Binding queue {0}".format(queue_spec))
-    bindings = queue_spec.get("bindings")
+    bindings = queue_spec.get("bindings", [])
 
     name = queue_spec.get("queue")
     for binding in bindings:
@@ -151,7 +147,7 @@ async def bind_queue(created_queue: Queue, queue_spec) -> None:
         await created_queue.bind(exchange, key)
 
 
-async def create_and_bind_queues(channel: Channel, queues):
+async def create_and_bind_queues(channel: Channel, queues: List[Dict[str, Any]]) -> Dict[str, Queue]:
     created_queues: Dict[str, Queue] = {}
 
     for queue in queues:
@@ -173,10 +169,10 @@ def load_consumer(consumer_str: str) -> Type[DispatcherConsumer]:
     return load_module_object(consumer_str)
 
 
-def load_module_object(module_object_str):
+def load_module_object(module_object_str: str) -> Type[DispatcherConsumer]:
     module_name, obj_name = module_object_str.split(":")
     module = load_module(module_name)
-    return getattr(module, obj_name)
+    return getattr(module, obj_name)  # type: ignore
 
 
 async def consumption_coroutine(
@@ -184,7 +180,7 @@ async def consumption_coroutine(
     amqp_proxy: AMQPProxy,
     wrapped_message: Message,
     wait_group: WaitGroup,
-):
+) -> None:
     logger = logging.getLogger("amqp-dispatcher")
 
     # Block until we get a free consumer instance
@@ -214,7 +210,7 @@ async def consumption_coroutine(
 
 async def create_consumption_task(
     connection: TrulyRobustConnection, consumer: Dict[Any, Any], connection_name: str
-):
+) -> None:
     """
     A consumption task fulfills a specification for a consumer entry in the
     consumers section of the YAML. Note that a consumption task may specify that
@@ -230,7 +226,7 @@ async def create_consumption_task(
 
     queue_name = consumer["queue"]
     prefetch_count = consumer.get("prefetch_count", 1)
-    consumer_str = consumer.get("consumer")
+    consumer_str = consumer.get("consumer", "")
     consumer_count = consumer.get("consumer_count", 1)
 
     consumer_class = load_consumer(consumer_str)
@@ -254,7 +250,7 @@ async def create_consumption_task(
 
     # Create a pool of consumers that can be used to
     # process incoming messages
-    consumer_pool = asyncio.Queue(maxsize=consumer_count)
+    consumer_pool: asyncio.Queue = asyncio.Queue(maxsize=consumer_count)
     for i in range(0, consumer_count):
         await consumer_pool.put(consumer_class())
 
@@ -311,7 +307,7 @@ def create_begin_consumption_task(
     return begin_consumption_task
 
 
-async def initialize_dispatcher(loop: AbstractEventLoop):
+async def initialize_dispatcher(loop: AbstractEventLoop) -> None:
     logger = logging.getLogger("amqp-dispatcher")
     logger.info("initialized amqp-dispatcher")
     args = get_args_from_cli()
@@ -342,7 +338,7 @@ async def initialize_dispatcher(loop: AbstractEventLoop):
         await create_and_bind_queues(channel, queues)
         await channel.close()
 
-    connection.add_close_callback(create_connection_closed_cb())
+    connection.add_close_callback(create_connection_closed_cb())  # type: ignore
 
     consumption_task = create_begin_consumption_task(
         config, connection, connection_name

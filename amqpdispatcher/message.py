@@ -1,3 +1,5 @@
+from typing import Any
+
 from aio_pika import IncomingMessage
 
 
@@ -22,25 +24,24 @@ class Message(object):
         self._body = body.decode("utf-8")
 
     @property
-    def raw_message(self):
+    def raw_message(self) -> IncomingMessage:
         return self._raw_message
 
     @property
-    def body(self):
+    def body(self) -> str:
         return self._body
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._body)
 
-    def __nonzero__(self):
+    def __nonzero__(self) -> bool:
         """Have to define this because length is defined."""
         return True
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, Message):
-            return self._properties == other._properties and self._body == other._body
+            return self._body == other._body
         return False
 
-    def __str__(self):
-        body = self._body.decode("utf-8")
-        return ("Message[body: {}, delivery_tag: {}]").format(body, self._delivery_tag)
+    def __str__(self) -> str:
+        return ("Message[body: {}, delivery_tag: {}]").format(self._body, self._raw_message.delivery_tag)

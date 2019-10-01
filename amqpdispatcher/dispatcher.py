@@ -8,9 +8,9 @@ from amqpdispatcher.dispatcher_common import get_args_from_cli, initialize_dispa
 from amqpdispatcher.validate import validate
 
 
-def main():
+def main() -> None:
     if os.getenv("LOGGING_FILE_CONFIG"):
-        logging.config.fileConfig(os.getenv("LOGGING_FILE_CONFIG"))
+        logging.config.fileConfig(os.getenv("LOGGING_FILE_CONFIG"))  # type: ignore
     else:
         logformat = (
             "[%(asctime)s] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s"

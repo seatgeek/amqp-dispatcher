@@ -2,13 +2,15 @@
 # -*- coding:utf-8 -*-
 import logging
 import sys
+from typing import Dict, Any
+
 import yaml
 
 from amqpdispatcher.dispatcher_common import load_consumer
 from amqpdispatcher.dispatcher_common import load_module_object
 
 
-def validate(config_file):
+def validate(config_file: str) -> None:
     logger = logging.getLogger("amqp-dispatcher")
     logger.setLevel(logging.ERROR)
     config = yaml.safe_load(open(config_file).read())
@@ -19,7 +21,7 @@ def validate(config_file):
     sys.exit(1)
 
 
-def validate_startup_handler(config):
+def validate_startup_handler(config: Dict[str, Any]) -> bool:
     startup_handler_str = config.get("startup_handler")
     if startup_handler_str is None:
         return True
@@ -41,7 +43,7 @@ def validate_startup_handler(config):
     return True
 
 
-def validate_consumers(config):
+def validate_consumers(config: Dict[str, Any]) -> bool:
     consumers = config.get("consumers", None)
     if not consumers:
         print("No consumers specified")
@@ -54,7 +56,7 @@ def validate_consumers(config):
     return is_valid
 
 
-def is_consumer_valid(consumer):
+def is_consumer_valid(consumer: Dict[str, Any]) -> bool:
     is_valid = True
     consumer_str = consumer.get("consumer", None)
     consumer_klass = None

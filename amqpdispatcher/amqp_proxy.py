@@ -21,38 +21,38 @@ class AMQPProxy(object):
         self._terminal_state = False
 
     @property
-    def has_responded_to_message(self):
+    def has_responded_to_message(self) -> bool:
         return self._terminal_state
 
-    async def ack(self):
+    async def ack(self) -> None:
         self._error_if_already_terminated()
         await self._message.raw_message.ack()
 
-    async def nack(self):
+    async def nack(self) -> None:
         self._error_if_already_terminated()
         await self._message.raw_message.nack()
 
-    async def reject(self, requeue=True):
+    async def reject(self, requeue : bool = True) -> None:
         self._error_if_already_terminated()
         await self._message.raw_message.reject(requeue=requeue)
 
     async def publish(
-        self, exchange: str, routing_key: str, headers: Dict[Any, Any], body: bytes
-    ):
+        self, exchange_name: str, routing_key: str, headers: Dict[Any, Any], body: bytes
+    ) -> None:
         exchange = Exchange(
-            name=exchange,
+            name=exchange_name,
             connection=self._connection,
             channel=self._publish_channel.channel,
             auto_delete=None,
             durable=None,
             internal=None,
-            passive=None,
+            passive=None
         )
 
         message = AioPikaMessage(body=body, headers=headers)
         await exchange.publish(message, routing_key)
 
-    def _error_if_already_terminated(self):
+    def _error_if_already_terminated(self) -> None:
         if self._terminal_state:
             raise Exception("Already responded to message!")
         else:
