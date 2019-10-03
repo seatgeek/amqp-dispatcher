@@ -4,7 +4,7 @@ from asyncio import AbstractEventLoop, Future
 from typing import Callable, Set, Optional, Dict, Any, Type, Awaitable
 
 import aiormq
-from aio_pika import Connection, RobustChannel, Channel
+from aio_pika import Connection, RobustChannel
 from aio_pika.exceptions import CONNECTION_EXCEPTIONS
 from aio_pika.tools import CallbackCollection
 from aio_pika.types import TimeoutType
