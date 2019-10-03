@@ -110,7 +110,6 @@ async def create_queue(channel: Channel, queue: Dict[str, Any]) -> Queue:
         exclusive=exclusive,
         durable=durable,
         auto_delete=auto_delete,
-        # nowait=nowait,
         arguments=arguments,
     )
     log_message = "Queue {0} - {1} messages and {1} consumers connected"

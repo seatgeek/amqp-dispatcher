@@ -1,6 +1,15 @@
-from typing import Any
+from typing import Any, Optional
 
 from aio_pika import IncomingMessage
+from typing_extensions import TypedDict
+
+
+class DeliveryInfo(TypedDict):
+    consumer_tag: Optional[Any]  # str
+    delivery_tag: Optional[Any]  # int
+    redelivered: Optional[Any]  # bool
+    exchange: str
+    routing_key: str
 
 
 class Message(object):
@@ -28,6 +37,16 @@ class Message(object):
         return self._raw_message
 
     @property
+    def delivery_info(self) -> DeliveryInfo:
+        return DeliveryInfo({
+            "consumer_tag": self._raw_message.consumer_tag,
+            "delivery_tag": self._raw_message.delivery_tag,
+            "redelivered": self._raw_message.redelivered,
+            "exchange": self._raw_message.exchange,
+            "routing_key": self.raw_message.routing_key
+        })
+
+    @property
     def body(self) -> str:
         return self._body
 
@@ -44,6 +63,6 @@ class Message(object):
         return False
 
     def __str__(self) -> str:
-        return ("Message[body: {}, delivery_tag: {}]").format(
-            self._body, self._raw_message.delivery_tag
+        return "Message[body: {}, delivery_info: {}, delivery_tag: {}]".format(
+            self._body, self.delivery_info, self._raw_message.delivery_tag
         )
