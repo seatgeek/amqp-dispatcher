@@ -14,7 +14,7 @@ queues:
     x_message_ttl: null
     bindings:
       - exchange: amq.direct
-        routing_key: test_queue
+        routing_key: queue
   - queue: second_test_queue
     durable: true
     auto_delete: false
@@ -27,13 +27,12 @@ queues:
     x_message_ttl: null
     bindings:
       - exchange: amq.direct
-        routing_key: second_test_queue
-
+        routing_key: queue
 consumers:
   - consumer: examples.example_consumer:Consumer
     consumer_count: 2
     queue: test_queue
-    prefetch_count: 2
+    prefetch_count: 1
   - consumer: examples.example_secondary_consumer:SecondaryConsumer
     consumer_count: 3
     queue: second_test_queue

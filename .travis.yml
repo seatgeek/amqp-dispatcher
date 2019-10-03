@@ -1,10 +1,10 @@
-sudo: false
+dist: xenial
 language: python
+services:
+  - docker
 python:
-  - "2.7"
   - "3.6"
 cache:
-  apt: true
   directories:
     - $HOME/.pip/download-cache
     - $HOME/.pip-accel
@@ -13,10 +13,19 @@ addons:
   apt:
     packages:
         - libevent-dev
-
-# command to install dependencies
+        - shelltestrunner
+        - bats
+    sources:
+      - sourceline: 'ppa:duggan/bats'
 install:
-  - pip install -r requirements-$TRAVIS_PYTHON_VERSION.txt
+  - wget https://github.com/jwilder/dockerize/releases/download/v0.6.1/dockerize-linux-amd64-v0.6.1.tar.gz && sudo tar -C /usr/local/bin -xzvf dockerize-linux-amd64-v0.6.1.tar.gz && rm dockerize-linux-amd64-v0.6.1.tar.gz
   - pip install -r requirements.txt
-# command to run tests
-script: nosetests tests/unit tests/integration
+  - docker-compose build
+  - git submodule add https://github.com/ztombol/bats-support tests/test_helper/bats-support
+  - git submodule add https://github.com/ztombol/bats-assert tests/test_helper/bats-assert
+script:
+  - nosetests tests/unit
+  - bats tests/configuration
+  - bats tests/integration
+  - black --check .
+  - mypy .

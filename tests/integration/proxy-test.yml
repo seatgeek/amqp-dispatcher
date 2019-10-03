@@ -2,7 +2,7 @@
 startup_handler: examples.example_startup:startup
 
 queues:
-  - queue: test_queue
+  - queue: main_proxy_queue
     durable: true
     auto_delete: false
     passive: true
@@ -14,8 +14,8 @@ queues:
     x_message_ttl: null
     bindings:
       - exchange: amq.direct
-        routing_key: test_queue
-  - queue: second_test_queue
+        routing_key: main_proxy_queue
+  - queue: publish_queue
     durable: true
     auto_delete: false
     passive: true
@@ -27,14 +27,14 @@ queues:
     x_message_ttl: null
     bindings:
       - exchange: amq.direct
-        routing_key: second_test_queue
+        routing_key: publish_queue
 
 consumers:
-  - consumer: examples.example_consumer:Consumer
-    consumer_count: 2
-    queue: test_queue
-    prefetch_count: 2
-  - consumer: examples.example_secondary_consumer:SecondaryConsumer
-    consumer_count: 3
-    queue: second_test_queue
-    prefetch_count: 4
+  - consumer: tests.consumers.publish_consumer:PublishConsumer
+    consumer_count: 5
+    queue: main_proxy_queue
+    prefetch_count: 0
+  - consumer: tests.consumers.forever_consumer:ForeverConsumer
+    consumer_count: 5
+    queue: publish_queue
+    prefetch_count: 0

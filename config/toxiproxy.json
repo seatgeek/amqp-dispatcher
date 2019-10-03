@@ -1,0 +1,8 @@
+[
+  {
+    "name": "rabbit_1",
+    "listen": "[::]:25672",
+    "upstream": "rabbit:5672",
+    "enabled": true
+  }
+]

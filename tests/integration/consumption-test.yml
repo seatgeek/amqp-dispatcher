@@ -1,0 +1,74 @@
+
+startup_handler: examples.example_startup:startup
+
+queues:
+  - queue: con_queue_one
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: con_queue_one
+  - queue: con_queue_two
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: con_queue_two
+  - queue: immediate_queue_one
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: immediate_queue_one
+  - queue: immediate_queue_two
+    durable: true
+    auto_delete: false
+    passive: true
+    exclusive: false
+    x_dead_letter_exchange: null
+    x_dead_letter_routing_key: null
+    x_max_length: null
+    x_expires: null
+    x_message_ttl: null
+    bindings:
+      - exchange: amq.direct
+        routing_key: immediate_queue_two
+
+consumers:
+  - consumer: tests.consumers.forever_consumer:ForeverConsumer
+    consumer_count: 3
+    queue: con_queue_one
+    prefetch_count: 0
+  - consumer: tests.consumers.forever_consumer:ForeverConsumer2
+    consumer_count: 2
+    queue: con_queue_two
+    prefetch_count: 0
+  - consumer: tests.consumers.immediate_consumer:ImmediateConsumer
+    consumer_count: 4
+    queue: immediate_queue_one
+    prefetch_count: 0
+  - consumer: tests.consumers.immediate_consumer:ImmediateConsumer2
+    consumer_count: 1
+    queue: immediate_queue_two
+    prefetch_count: 0

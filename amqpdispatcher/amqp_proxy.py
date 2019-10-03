@@ -1,41 +1,59 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
+from typing import Dict, Any
 
-from amqpdispatcher.channel_proxy import proxy_channel
+from aio_pika import Channel, Exchange, Connection
+from aio_pika import Message as AioPikaMessage
+
+from amqpdispatcher.message import Message
 
 
 class AMQPProxy(object):
+    _connection: Connection
+    _publish_channel: Channel
+    _terminal_state: bool
+    _message: Message
 
-    def __init__(self, channel, msg):
-        self._channel = proxy_channel(channel)
-        self._msg = msg
+    def __init__(self, connection: Connection, channel: Channel, message: Message):
+        self._message = message
+        self._publish_channel = channel
+        self._connection = connection
         self._terminal_state = False
 
     @property
-    def tag(self):
-        return self._msg.delivery_info['delivery_tag']
-
-    @property
-    def has_responded_to_message(self):
+    def has_responded_to_message(self) -> bool:
         return self._terminal_state
 
-    def ack(self):
+    async def ack(self) -> None:
         self._error_if_already_terminated()
-        self._channel.basic_ack(self.tag)
+        await self._message.raw_message.ack()
 
-    def nack(self):
+    async def nack(self) -> None:
         self._error_if_already_terminated()
-        self._channel.basic_nack(self.tag)
+        await self._message.raw_message.nack()
 
-    def reject(self, requeue=True):
+    async def reject(self, requeue: bool = True) -> None:
         self._error_if_already_terminated()
-        self._channel.basic_reject(self.tag, requeue=requeue)
+        await self._message.raw_message.reject(requeue=requeue)
 
-    def publish(self, exchange, routing_key, headers, body):
-        self._channel.basic_publish(exchange, routing_key, body, headers)
+    async def publish(
+        self, exchange_name: str, routing_key: str, headers: Dict[str, Any], body: bytes
+    ) -> None:
+        exchange = Exchange(
+            name=exchange_name,
+            connection=self._connection,
+            channel=self._publish_channel.channel,
+            auto_delete=None,
+            durable=None,
+            internal=None,
+            passive=None,
+        )
 
-    def _error_if_already_terminated(self):
+        message = AioPikaMessage(body=body, headers=headers)
+        await exchange.publish(message, routing_key)
+
+    def _error_if_already_terminated(self) -> None:
         if self._terminal_state:
-            raise Exception('Already responded to message!')
+            raise Exception("Already responded to message!")
         else:
             self._terminal_state = True

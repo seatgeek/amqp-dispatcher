@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-
+import asyncio
 import logging
 import os
 
-from amqpdispatcher.dispatcher_common import get_args_from_cli
-from amqpdispatcher.dispatcher_haigha import main as main_haigha
-from amqpdispatcher.dispatcher_pika import main as main_pika
+from amqpdispatcher.dispatcher_common import get_args_from_cli, initialize_dispatcher
 from amqpdispatcher.validate import validate
 
 
-def main():
-    if os.getenv('LOGGING_FILE_CONFIG'):
-        logging.config.fileConfig(os.getenv('LOGGING_FILE_CONFIG'))
+def main() -> None:
+    if os.getenv("LOGGING_FILE_CONFIG"):
+        logging.config.fileConfig(os.getenv("LOGGING_FILE_CONFIG"))  # type: ignore
     else:
-        logformat = "[%(asctime)s] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s"
+        logformat = (
+            "[%(asctime)s] %(name)s [pid:%(process)d] - %(levelname)s - %(message)s"
+        )
         datefmt = "%Y-%m-%d %H:%M:%S"
         logging.basicConfig(level=logging.DEBUG, format=logformat, datefmt=datefmt)
 
@@ -22,11 +22,16 @@ def main():
     if args.validate:
         return validate(args.config)
 
-    logger = logging.getLogger('amqp-dispatcher')
-    logger.info('Connection: {0}'.format(args.connection))
-    if args.connection == 'pika':
-        return main_pika()
-    return main_haigha()
+    logger = logging.getLogger("amqp-dispatcher")
+    logger.info("Connection: aio_pika")
 
-if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    asyncio.ensure_future(initialize_dispatcher(loop))
+    try:
+        loop.run_forever()
+    except Exception:
+        loop.close()
+
+
+if __name__ == "__main__":
     main()

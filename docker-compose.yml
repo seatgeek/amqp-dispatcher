@@ -1,0 +1,27 @@
+version: '3'
+services:
+  dispatcher:
+    container_name: amqp-dispatcher_dispatcher_1
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - rabbit
+    environment:
+      NOMAD_ALLOC_ID: 17
+      NOMAD_JOB_NAME: 2000
+      RABBITMQ_URL: amqp://guest:guest@toxiproxy:25672/
+  rabbit:
+    container_name: amqp-dispatcher_rabbit_1
+    ports:
+      - "15673:15672"
+      - "5672:5672"
+    image: rabbitmq:management-alpine
+  toxiproxy:
+    container_name: amqp-dispatcher_toxiproxy_1
+    volumes:
+      - ./config:/config
+    command: -config /config/toxiproxy.json
+    image: shopify/toxiproxy
+    depends_on:
+      - rabbit

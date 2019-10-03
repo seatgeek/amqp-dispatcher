@@ -1,5 +1,0 @@
-argparse
-importlib
-gevent==1.1
-haigha>=0.7.3,<1.0
--e git://github.com/lacostej/nosyd.git#egg=nosyd

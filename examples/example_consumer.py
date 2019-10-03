@@ -1,30 +1,29 @@
+import asyncio
 import logging
-import random
 import traceback
 
-import gevent
+from amqpdispatcher.amqp_proxy import AMQPProxy
 
 logger = logging.getLogger(__name__)
 
 
 class Consumer(object):
+    def __init__(self) -> None:
+        logger.info("I've been primarily initialized!")
 
-    def __init__(self):
-        logger.info("I've been initiliazed")
+    async def consume(self, amqp: AMQPProxy, msg):
+        logger.debug("Consuming primary message:".format(msg.body))
 
-    def consume(self, amqp, msg):
-        logger.debug('Consuming message:'.format(msg.body))
+        await amqp.publish("amq.direct", "dead_rk", {}, b"New body!")
+        await asyncio.sleep(3)
 
-        gevent.sleep(1)
-        val = random.random()
-        amqp.publish('test_exchange', 'dead_rk', {}, 'New body!')
-        if val < .2:
-            raise ValueError()
-        logger.debug('Done sleeping')
-        amqp.ack()
+        logger.debug(
+            "Done primary sleeping {0}".format(amqp._message.raw_message.delivery_tag)
+        )
+        await amqp.ack()
 
-    def shutdown(self, exception=None):
+    async def shutdown(self, exception=None):
         if exception is not None:
             logging.error(traceback.format_exc())
         else:
-            logging.debug('Shut down worker cleanly')
+            logging.debug("Shut down primary worker cleanly")

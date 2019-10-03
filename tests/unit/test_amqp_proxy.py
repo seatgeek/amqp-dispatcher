@@ -1,41 +1,61 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
-
+from asyncio import Future
 from itertools import permutations
-from unittest import TestCase
-
+import pytest
 from mock import MagicMock
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 
+TERMINALS = ["ack", "nack", "reject"]
 
-class TestAmqpProxy(TestCase):
 
-    def setUp(self):
-        self.channel = MagicMock(name='channel')
-        self.msg = MagicMock(name='msg')
-        self.terminals = ['ack', 'nack', 'reject']
+def create_mocks():
+    connection = MagicMock(name="connection")
+    channel = MagicMock(name="channel")
+    message = MagicMock(name="message")
+    f = Future()
+    f.set_result(None)
+    message.raw_message.ack.return_value = f
+    message.raw_message.nack.return_value = f
+    message.raw_message.reject.return_value = f
 
-    def test_terminal_twice_raises_error(self):
-        for terminal in self.terminals:
-            proxy = AMQPProxy(self.channel, self.msg)
-            term_func = getattr(proxy, terminal)
-            term_func()
-            self.assertRaises(Exception, term_func)
+    return connection, channel, message
 
-    def test_any_two_terminal_functions_raise_error(self):
-        for term_a, term_b in permutations(self.terminals, 2):
-            proxy = AMQPProxy(self.channel, self.msg)
-            term_func_a = getattr(proxy, term_a)
-            term_func_b = getattr(proxy, term_b)
-            term_func_a()
-            self.assertRaises(Exception, term_func_b)
 
-    def test_terminal_state_false_when_starting(self):
-        proxy = AMQPProxy(self.channel, self.msg)
-        self.assertFalse(proxy.has_responded_to_message)
+@pytest.mark.asyncio
+async def test_terminal_twice_raises_error():
+    (connection, channel, message) = create_mocks()
+    for terminal in TERMINALS:
+        proxy = AMQPProxy(connection, channel, message)
+        term_func = getattr(proxy, terminal)
+        await term_func()
 
-    def test_terminal_state_true_after_responding(self):
-        proxy = AMQPProxy(self.channel, self.msg)
-        proxy.ack()
-        self.assertTrue(proxy.has_responded_to_message)
+        with pytest.raises(Exception):
+            await term_func()
+
+
+@pytest.mark.asyncio
+async def test_any_two_terminal_functions_raise_error():
+    (connection, channel, message) = create_mocks()
+    for term_a, term_b in permutations(TERMINALS, 2):
+        proxy = AMQPProxy(connection, channel, message)
+        term_func_a = getattr(proxy, term_a)
+        term_func_b = getattr(proxy, term_b)
+        await term_func_a()
+        with pytest.raises(Exception):
+            await term_func_b()
+
+
+def test_terminal_state_false_when_starting():
+    (connection, channel, message) = create_mocks()
+    proxy = AMQPProxy(connection, channel, message)
+    assert proxy.has_responded_to_message is False
+
+
+@pytest.mark.asyncio
+async def test_terminal_state_true_after_responding():
+    (connection, channel, message) = create_mocks()
+    proxy = AMQPProxy(connection, channel, message)
+    await proxy.ack()
+    assert proxy.has_responded_to_message is True
