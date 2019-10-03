@@ -44,15 +44,6 @@ def get_args_from_cli() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--connection",
-        metavar="connection",
-        type=str,
-        default=("haigha" if six.PY2 else "pika"),
-        choices=["haigha", "pika"] if six.PY2 else ["pika"],
-        help="type of connection to use",
-    )
-
-    parser.add_argument(
         "--validate",
         dest="validate",
         action="store_true",

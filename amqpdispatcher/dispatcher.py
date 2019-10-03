@@ -23,7 +23,7 @@ def main() -> None:
         return validate(args.config)
 
     logger = logging.getLogger("amqp-dispatcher")
-    logger.info("Connection: {0}".format(args.connection))
+    logger.info("Connection: aio_pika")
 
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(initialize_dispatcher(loop))
