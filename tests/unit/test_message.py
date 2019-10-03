@@ -14,11 +14,11 @@ def test_incoming_message_to_message():
                 delivery_tag="dtag",
                 redelivered=True,
                 exchange="exc",
-                routing_key="rkey"
+                routing_key="rkey",
             ),
             header=ContentHeader(),
-            body=b'',
-            channel=None
+            body=b"",
+            channel=None,
         )
     )
 
@@ -29,4 +29,3 @@ def test_incoming_message_to_message():
     assert message.delivery_info["redelivered"], True
     assert message.delivery_info["exchange"], "exc"
     assert message.delivery_info["routing_key"], "rkey"
-

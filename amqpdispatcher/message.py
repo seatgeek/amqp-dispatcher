@@ -38,13 +38,15 @@ class Message(object):
 
     @property
     def delivery_info(self) -> DeliveryInfo:
-        return DeliveryInfo({
-            "consumer_tag": self._raw_message.consumer_tag,
-            "delivery_tag": self._raw_message.delivery_tag,
-            "redelivered": self._raw_message.redelivered,
-            "exchange": self._raw_message.exchange,
-            "routing_key": self.raw_message.routing_key
-        })
+        return DeliveryInfo(
+            {
+                "consumer_tag": self._raw_message.consumer_tag,
+                "delivery_tag": self._raw_message.delivery_tag,
+                "redelivered": self._raw_message.redelivered,
+                "exchange": self._raw_message.exchange,
+                "routing_key": self.raw_message.routing_key,
+            }
+        )
 
     @property
     def body(self) -> str:
