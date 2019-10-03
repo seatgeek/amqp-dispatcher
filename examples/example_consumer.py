@@ -16,7 +16,7 @@ class Consumer(object):
 
         await amqp.publish("amq.direct", "dead_rk", {}, b"New body!")
         await asyncio.sleep(3)
-        
+
         logger.debug(
             "Done primary sleeping {0}".format(amqp._message.raw_message.delivery_tag)
         )
