@@ -9,9 +9,10 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
 
 
 WORKDIR /app
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 COPY . .
 
-RUN pip install -r requirements.txt
 
 
 ENTRYPOINT ["dockerize", "-wait", "tcp://rabbit:5672", "-timeout", "15s", "python", "-m", "amqpdispatcher.dispatcher", "--config", "./examples/amqp-dispatcher-config.yml"]
