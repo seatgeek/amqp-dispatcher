@@ -1,9 +1,15 @@
 Changelog
 =========
 
-1.1.0 (2020-05-07)
+1.2.0 (2020-05-07)
 ------------------
 ------------
+- Update __init__.py. [NicholasABriganti]
+
+
+1.1.0 (2020-05-07)
+------------------
+- Release version 1.1.0. [Nicholas Briganti]
 - Release version 1.1.0. [Nicholas Briganti]
 - Release version 1.1.0. [Nicholas Briganti]
 - Release version 1.1.0. [Nicholas Briganti]
