@@ -3,7 +3,8 @@ Changelog
 
 1.2.0 (2020-05-07)
 ------------------
-------------
+------------------
+- Release version 1.2.0. [Nicholas Briganti]
 - Update __init__.py. [NicholasABriganti]
 
 
