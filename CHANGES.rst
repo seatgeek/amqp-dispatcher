@@ -6,20 +6,13 @@ Changelog
 ------------
 - Release version 1.1.0. [Nicholas Briganti]
 - Release version 1.1.0. [Nicholas Briganti]
+- Release version 1.1.0. [Nicholas Briganti]
 - Merge branch 'master' of github.com:seatgeek/amqp-dispatcher.
   [Nicholas Briganti]
 - Update __init__.py. [NicholasABriganti]
 - Release version 1.2.0. [Nicholas Briganti]
-
-
-1.2.0 (2020-05-07)
-------------------
 - Release version 1.2.0. [Nicholas Briganti]
 - Update __init__.py. [NicholasABriganti]
-
-
-1.1.0 (2020-05-07)
-------------------
 - Merge pull request #39 from seatgeek/nb-quorum-queues.
   [NicholasABriganti]
 
