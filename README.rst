@@ -140,6 +140,7 @@ Queue configuration is as follows:
 - ``x_max_length``: (optional) maximum length of ready messages. (default = INFINITE)
 - ``x_expires``: (optional) How long a queue can be unused for before it is automatically deleted (milliseconds) (default=INFINITE)
 - ``x_message_ttl``: (optional) How long a message published to a queue can live before it is discarded (milliseconds) (default=INFINITE)
+- ``x_queue_type``: (optional) The type of queue to create - either classic or quorum (default = classic)
 
 Bindings
 --------
@@ -161,6 +162,7 @@ A complete configuration example would look like:
         x_max_length: null
         x_expires: null
         x_message_ttl: null
+        x_queue_type: null
         bindings:
           - exchange: notify
             routing_key: transaction.*

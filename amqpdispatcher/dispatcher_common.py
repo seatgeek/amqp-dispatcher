@@ -97,6 +97,7 @@ async def create_queue(channel: Channel, queue: Dict[str, Any]) -> Queue:
         "x_max_length",
         "x_expires",
         "x_message_ttl",
+        "x_queue_type",
     ]
 
     for queue_arg in queue_args:

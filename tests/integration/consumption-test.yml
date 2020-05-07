@@ -12,6 +12,7 @@ queues:
     x_max_length: null
     x_expires: null
     x_message_ttl: null
+    x_queue_type: null
     bindings:
       - exchange: amq.direct
         routing_key: con_queue_one
@@ -25,6 +26,7 @@ queues:
     x_max_length: null
     x_expires: null
     x_message_ttl: null
+    x_queue_type: null
     bindings:
       - exchange: amq.direct
         routing_key: con_queue_two
@@ -38,6 +40,7 @@ queues:
     x_max_length: null
     x_expires: null
     x_message_ttl: null
+    x_queue_type: null
     bindings:
       - exchange: amq.direct
         routing_key: immediate_queue_one
@@ -51,6 +54,7 @@ queues:
     x_max_length: null
     x_expires: null
     x_message_ttl: null
+    x_queue_type: null
     bindings:
       - exchange: amq.direct
         routing_key: immediate_queue_two
