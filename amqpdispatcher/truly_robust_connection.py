@@ -39,7 +39,7 @@ class TrulyRobustConnection(Connection):
         self.consumer_completion_group = WaitGroup()
 
         self.__channels = set()
-        self._on_reconnect_callbacks = CallbackCollection()
+        self._on_reconnect_callbacks = CallbackCollection(self)
         self._consumption_task = None
         self._running_task = None
         self._closed = False
