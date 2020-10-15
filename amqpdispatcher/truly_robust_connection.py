@@ -73,7 +73,7 @@ class TrulyRobustConnection(Connection):
         )
 
     def add_reconnect_callback(self, callback: Callable[[], None]) -> None:
-        """ Add callback which will be called after reconnect.
+        """Add callback which will be called after reconnect.
 
         :return: None
         """

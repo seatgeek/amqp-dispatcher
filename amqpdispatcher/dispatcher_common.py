@@ -7,6 +7,7 @@ import types
 from asyncio import AbstractEventLoop
 from typing import Dict, Optional, Type, Any, Awaitable, Callable, List
 from typing_extensions import Protocol
+from sys import exit
 
 import aio_pika
 import importlib
@@ -224,7 +225,14 @@ async def create_consumption_task(
     consumer_str = consumer.get("consumer", "")
     consumer_count = consumer.get("consumer_count", 1)
 
-    consumer_class = load_consumer(consumer_str)
+    try:
+        consumer_class = load_consumer(consumer_str)
+    except Exception as e:
+        logger.error(
+            "amqp-dispatcher: fatal error loading consumer '{}'".format(consumer_str)
+        )
+        logger.exception(e)
+        exit(1)
 
     # Consumers can use the AMQP proxy to publish messages. This
     # is a dedicated channel for that purpose
