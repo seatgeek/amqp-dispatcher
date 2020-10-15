@@ -228,7 +228,9 @@ async def create_consumption_task(
     try:
         consumer_class = load_consumer(consumer_str)
     except Exception as e:
-        logger.error("amqp-dispatcher: fatal error loading consumer '{}'".format(consumer_str))
+        logger.error(
+            "amqp-dispatcher: fatal error loading consumer '{}'".format(consumer_str)
+        )
         logger.exception(e)
         exit(1)
 
