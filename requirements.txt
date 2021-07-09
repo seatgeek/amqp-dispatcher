@@ -1,4 +1,4 @@
-aio-pika>=6.1.2,<6.2.0
+aio-pika==6.7.1
 black>=19.3b0
 coverage>=4.5.4
 csvkit>=1.0.4
