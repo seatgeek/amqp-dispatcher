@@ -5,7 +5,7 @@ from typing import Optional
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.message import Message
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class BaseTestConsumer(object):

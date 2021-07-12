@@ -4,7 +4,7 @@ import traceback
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class Consumer(object):

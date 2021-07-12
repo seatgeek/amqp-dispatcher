@@ -11,7 +11,7 @@ from amqpdispatcher.dispatcher_common import load_module_object
 
 
 def validate(config_file: str) -> None:
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     logger.setLevel(logging.ERROR)
     config = yaml.safe_load(open(config_file).read())
     valid_handler = validate_startup_handler(config)

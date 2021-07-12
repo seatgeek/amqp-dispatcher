@@ -5,7 +5,7 @@ from amqpdispatcher.amqp_proxy import AMQPProxy
 from amqpdispatcher.message import Message
 from tests.consumers.base_test_consumer import BaseTestConsumer
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class ForeverConsumer(BaseTestConsumer):

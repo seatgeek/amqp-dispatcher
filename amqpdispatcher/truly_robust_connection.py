@@ -11,7 +11,7 @@ from aio_pika.types import TimeoutType
 
 from amqpdispatcher.wait_group import WaitGroup
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class TrulyRobustConnection(Connection):
