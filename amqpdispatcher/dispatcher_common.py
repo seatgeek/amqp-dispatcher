@@ -59,14 +59,14 @@ def channel_closed_cb(
     ch: Channel, reply_code: Optional[str] = None, reply_text: Optional[str] = None
 ) -> None:
     info = "[{0}] {1}".format(reply_code, reply_text)
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     logger.info("AMQP channel closed; close-info: {0}".format(info))
     return
 
 
 def create_connection_closed_cb() -> Callable[[Any, Any], None]:
     def connection_closed_cb(*args: Any, **kwargs: Any) -> None:
-        logger = logging.getLogger("amqp-dispatcher")
+        logger = logging.getLogger()
         logger.info("AMQP broker connection closed; close-info")
 
     return connection_closed_cb
@@ -74,7 +74,7 @@ def create_connection_closed_cb() -> Callable[[Any, Any], None]:
 
 def create_reconnection_callback() -> Callable[[Any, Any], None]:
     def reconnect_callback(*args: Any, **kwargs: Any) -> None:
-        logger = logging.getLogger("amqp-dispatcher")
+        logger = logging.getLogger()
         logger.info("AMQP broker reconnected!; close-info")
 
     return reconnect_callback
@@ -82,7 +82,7 @@ def create_reconnection_callback() -> Callable[[Any, Any], None]:
 
 async def create_queue(channel: Channel, queue: Dict[str, Any]) -> Queue:
     """creates a queue synchronously"""
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     name = queue["queue"]
     logger.info("Create queue {0}".format(name))
     durable = bool(queue.get("durable", True))
@@ -128,7 +128,7 @@ async def create_queue(channel: Channel, queue: Dict[str, Any]) -> Queue:
 
 async def bind_queue(created_queue: Queue, queue_spec: Dict[str, Any]) -> None:
     """binds a queue to the bindings identified in the doc"""
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     logger.debug("Binding queue {0}".format(queue_spec))
     bindings = queue_spec.get("bindings", [])
 
@@ -160,7 +160,7 @@ def load_module(module_name: str) -> types.ModuleType:
 
 
 def load_consumer(consumer_str: str) -> Type[DispatcherConsumer]:
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     logger.debug("Loading consumer {0}".format(consumer_str))
     return load_module_object(consumer_str)
 
@@ -177,7 +177,7 @@ async def consumption_coroutine(
     wrapped_message: Message,
     wait_group: WaitGroup,
 ) -> None:
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
 
     # Block until we get a free consumer instance
     consumer_instance = await consumer_pool.get()
@@ -218,7 +218,7 @@ async def create_consumption_task(
     :param connection_name:
     :return:
     """
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
 
     queue_name = consumer["queue"]
     prefetch_count = consumer.get("prefetch_count", 1)
@@ -311,7 +311,7 @@ def create_begin_consumption_task(
 
 
 async def initialize_dispatcher(loop: AbstractEventLoop) -> None:
-    logger = logging.getLogger("amqp-dispatcher")
+    logger = logging.getLogger()
     logger.info("initialized amqp-dispatcher")
     args = get_args_from_cli()
     config = yaml.safe_load(open(args.config).read())
