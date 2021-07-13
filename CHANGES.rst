@@ -1,13 +1,34 @@
 Changelog
 =========
 
-1.2.1 (2020-10-15)
-------------------
-- Release version 1.2.1 [Jesper Devantier]
-
-1.2.0 (2020-05-07)
+1.2.2 (2021-07-13)
 ------------------
 ------------
+- More of this. [Phil Tang]
+- Passing an arg here prevents any logs from happening. [Phil Tang]
+
+
+1.2.1 (2020-10-15)
+------------------
+- Merge pull request #42 from seatgeek/jwd-fail-on-consumer-load-errors.
+  [José Lorenzo Rodríguez]
+
+  log and exit if amqp-dispatcher fails to load consumer
+- Release 1.2.1. [Jesper Wendel Devantier]
+- Ignore hidden files. [Jesper Wendel Devantier]
+- Library uses type annotations - requires 3.x. [Jesper Wendel
+  Devantier]
+- Black. [Jesper Wendel Devantier]
+- Log and exit if amqp-dispatcher fails to load consumer. [Jesper Wendel
+  Devantier]
+
+  Ensure that failure to load a given consumer results in a visible
+  error.
+
+  Made in response to errors observed in production where loading a
+  consumer may fail silently and which is only visible through
+  observing that no consumers are registered to a queue in RMQ.
+- Release version 1.2.0. [Nicholas Briganti]
 - Update __init__.py. [NicholasABriganti]
 
 
