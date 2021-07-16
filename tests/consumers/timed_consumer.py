@@ -1,10 +1,10 @@
 import asyncio
-import logging
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from amqpdispatcher.logging import getLogger
 from tests.consumers.base_test_consumer import BaseTestConsumer
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class TimedConsumer(BaseTestConsumer):

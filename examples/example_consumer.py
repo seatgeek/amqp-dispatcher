@@ -1,10 +1,10 @@
 import asyncio
-import logging
 import traceback
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from amqpdispatcher.logging import getLogger
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class Consumer(object):
@@ -24,6 +24,6 @@ class Consumer(object):
 
     async def shutdown(self, exception=None):
         if exception is not None:
-            logging.error(traceback.format_exc())
+            logger.error(traceback.format_exc())
         else:
-            logging.debug("Shut down primary worker cleanly")
+            logger.debug("Shut down primary worker cleanly")

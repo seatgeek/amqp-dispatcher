@@ -1,10 +1,5 @@
-import asyncio
-import logging
-
 from amqpdispatcher.amqp_proxy import AMQPProxy
 from tests.consumers.base_test_consumer import BaseTestConsumer
-
-logger = logging.getLogger(__name__)
 
 
 class PublishConsumer(BaseTestConsumer):

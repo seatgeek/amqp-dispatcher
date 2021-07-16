@@ -1,6 +1,7 @@
-import logging
+from amqpdispatcher.logging import getLogger
+
+logger = getLogger(__name__)
 
 
 def startup():
-    logger = logging.getLogger("amqp-dispatcher")
     logger.info("we started up")

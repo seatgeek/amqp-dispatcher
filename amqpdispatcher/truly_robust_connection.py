@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from asyncio import AbstractEventLoop, Future
 from typing import Callable, Set, Optional, Dict, Any, Type, Awaitable
 
@@ -9,9 +8,10 @@ from aio_pika.exceptions import CONNECTION_EXCEPTIONS
 from aio_pika.tools import CallbackCollection
 from aio_pika.types import TimeoutType
 
+from amqpdispatcher.logging import getLogger
 from amqpdispatcher.wait_group import WaitGroup
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class TrulyRobustConnection(Connection):

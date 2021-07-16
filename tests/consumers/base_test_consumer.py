@@ -1,11 +1,11 @@
-import logging
 import traceback
 from typing import Optional
 
 from amqpdispatcher.amqp_proxy import AMQPProxy
+from amqpdispatcher.logging import getLogger
 from amqpdispatcher.message import Message
 
-logger = logging.getLogger(__name__)
+logger = getLogger(__name__)
 
 
 class BaseTestConsumer(object):
@@ -21,9 +21,9 @@ class BaseTestConsumer(object):
 
     async def shutdown(self, exception: Optional[Exception] = None) -> None:
         if exception is not None:
-            logging.error(traceback.format_exc())
+            logger.error(traceback.format_exc())
         else:
-            logging.info("shutting down {0}".format(self.class_name))
+            logger.info("shutting down {0}".format(self.class_name))
 
     def __del__(self) -> None:
         logger.info("{0} destroyed".format(self.class_name))
