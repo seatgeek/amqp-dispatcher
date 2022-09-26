@@ -51,6 +51,15 @@ def get_args_from_cli() -> argparse.Namespace:
         default=False,
         help="validate the config.yml file",
     )
+
+    parser.add_argument(
+        "--rabbitmq_url",
+        type=str,
+        dest="rabbitmq_url",
+        default=None,
+        required=False,
+        help="RabbitMQ URL. If this is not provided the RABBITMQ_URL env var will be used."
+    )
     args = parser.parse_args()
     return args
 
@@ -323,6 +332,8 @@ async def initialize_dispatcher(loop: AbstractEventLoop) -> None:
         logger.info("Startup handled")
 
     environment = Environment.create()
+    if args.rabbitmq_url is not None:
+        environment.rabbit_url=args.rabbitmq_url
 
     connection_name = "{0}.{1}".format(
         environment.nomad_job_name, environment.nomad_alloc_id
